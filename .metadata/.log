@@ -1,0 +1,19 @@
+!SESSION 2015-06-16 12:24:11.818 -----------------------------------------------
+eclipse.buildId=4.4.2.M20150204-1700
+java.version=1.8.0_40
+java.vendor=Oracle Corporation
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.jee.product
+Command-line arguments:  -data /home/ameya/uOttawa/MCS/Thesis/Work/workspace/mcs-thesis -os linux -ws gtk -arch x86_64 -product org.eclipse.epp.package.jee.product
+
+!ENTRY org.eclipse.m2e.logback.appender 2 0 2015-06-16 12:36:53.073
+!MESSAGE Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+
+!ENTRY org.eclipse.m2e.logback.appender 2 0 2015-06-16 12:36:53.088
+!MESSAGE Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+
+!ENTRY org.scala-ide.sdt.core 2 0 2015-06-16 12:40:15.816
+!MESSAGE Preference scala.compiler.sourceLevel was uninitialized for cassandra-loader, setting default to 2.11.
+
+!ENTRY org.scala-ide.sdt.core 1 0 2015-06-16 12:40:15.977
+!MESSAGE Adding  -Xsource:2.10 -Ymacro-expand:none to compiler arguments of cassandra-loader because of: requested Scala Installation change

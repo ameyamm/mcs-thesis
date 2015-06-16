@@ -1,0 +1,11 @@
+2015-06-16 12:39:51,395  WARN [Worker-11] - ScalaProject - Project cassandra-loader has platform default sourceLevel.
+2015-06-16 12:39:51,396  WARN [Worker-11] - ScalaProject - Project cassandra-loader runs on platform default installation.
+2015-06-16 12:39:52,412  WARN [Worker-11] - ScalaProject - Project cassandra-loader has platform default sourceLevel.
+2015-06-16 12:39:52,413  WARN [Worker-11] - ScalaProject - Project cassandra-loader runs on platform default installation.
+2015-06-16 12:39:53,034  WARN [Java indexing] - ScalaProject - Project cassandra-loader has platform default sourceLevel.
+2015-06-16 12:39:53,035  WARN [Java indexing] - ScalaProject - Project cassandra-loader runs on platform default installation.
+2015-06-16 12:39:53,529  WARN [Worker-11] - ScalaProject - Project cassandra-loader has platform default sourceLevel.
+2015-06-16 12:39:53,529  WARN [Worker-11] - ScalaProject - Project cassandra-loader runs on platform default installation.
+2015-06-16 12:39:55,765  WARN [Java indexing] - ScalaProject - Project cassandra-loader has platform default sourceLevel.
+2015-06-16 12:39:55,765  WARN [Java indexing] - ScalaProject - Project cassandra-loader runs on platform default installation.
+2015-06-16 12:40:15,977  WARN [main] - org.scala-ide.sdt.core - org.scala-ide.sdt.core - org.scala-ide.sdt.core - 0 - Preference scala.compiler.sourceLevel was uninitialized for cassandra-loader, setting default to 2.11.
