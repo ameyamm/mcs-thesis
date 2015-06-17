@@ -20,4 +20,11 @@ object Utils extends Serializable{
       dateformat.parse(dateStr)
     }
   }
+  
+  def getStringOptionValue(stringOpt : Option[String]) : String = {
+    stringOpt match {
+      case Some(value) => value 
+      case None => ""
+    }
+  }
 }

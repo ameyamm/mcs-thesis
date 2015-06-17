@@ -98,28 +98,28 @@ class Loader(/*val sc : SparkContext*/) extends Serializable{
 				case Some(id) => id.toLong
 				case None => -1 
 				},
-				_firstName = mapRec.get("first_name"),
-				_lastName = mapRec.get("last_name"),
-				_middleName = mapRec.get("middle_name"),
-				_honorific = mapRec.get("honorific"),
-				_suffix = mapRec.get("suffix"),
-				_organizationName = mapRec.get("organization_name"),
-				_organizationName2 = mapRec.get("organization_name2"),
-				_contactType = mapRec.get("contact_type"),
-				_dateOfBirth = mapRec.get("date_of_birth") match {
+				first_name = mapRec.get("first_name"),
+				last_name = mapRec.get("last_name"),
+				middle_name = mapRec.get("middle_name"),
+				honorific = mapRec.get("honorific"),
+				suffix = mapRec.get("suffix"),
+				organization_name = mapRec.get("organization_name"),
+				organization_name2 = mapRec.get("organization_name2"),
+				contact_type = mapRec.get("contact_type"),
+				date_of_birth = mapRec.get("date_of_birth") match {
 				case Some(dob) => Some(Utils.convertToDate(dob))
 				case None      => None
 				},
-				_deceased = mapRec.get("deceased") match {
+				deceased = mapRec.get("deceased") match {
 				case Some(isDeceased) => isDeceased.equals("t")
 				case None => false
 				},
-				_employer = mapRec.get("employer"),
-				_gender = mapRec.get("gender"),
-				_industry = mapRec.get("industry"),
-				_language = mapRec.get("language"),
-				_occupation = mapRec.get("occupation"),
-				_contactMethod = computeContactMethodSet
+				employer = mapRec.get("employer"),
+				gender = mapRec.get("gender"),
+				industry = mapRec.get("industry"),
+				language = mapRec.get("language"),
+				occupation = mapRec.get("occupation"),
+				contact_methods = computeContactMethodSet
 				(
 						bulkEmail = mapRec.get("allow_bulk_email"),
 						bulkMail = mapRec.get("allow_bulk_mail"),
@@ -130,25 +130,25 @@ class Loader(/*val sc : SparkContext*/) extends Serializable{
 						voiceBroadcast = mapRec.get("allow_voice_broadcast"),
 						sms = mapRec.get("allowsms")
 				),
-        _civicAddrType = mapRec.get("civic_address_type"),
-        _civicAddrId = mapRec.get("civic_address_id") match {
+        civic_address_type = mapRec.get("civic_address_type"),
+        civic_address_id = mapRec.get("civic_address_id") match {
                 case Some(id) => id.toLong
                 case None => -1 
                 },
-        _civicAddrBuildingNum = mapRec.get("civic_address_building_number"), 
-        _civicAddrApartmentNum = mapRec.get("civic_address_apartment_number"),
-        _civicAddrCity = mapRec.get("civic_address_city"), 
-        _civicAddrCountry = mapRec.get("civic_address_country"), 
-        _civicAddrLine1 = mapRec.get("civic_address_line1"), 
-        _civicAddrLine2 = mapRec.get("civic_address_line2"), 
-        _civicAddrMeridian = mapRec.get("civic_address_meridian"), 
-        _civicAddrNumSuffix = mapRec.get("civic_address_number_suffix"), 
-        _civicAddrPostalCode = mapRec.get("civic_address_postal_code"), 
-        _civicAddrProvince = mapRec.get("civic_address_province"), 
-        _civicAddrRange = mapRec.get("civic_address_range"), 
-        _civicAddrQuarter = mapRec.get("civic_address_quarter"), 
-        _civicAddrReserve = mapRec.get("civic_address_reserve"),
-        _civicAddrSection = mapRec.get("civic_address_section")
+        civic_address_building_number = mapRec.get("civic_address_building_number"), 
+        civic_address_apartment_number = mapRec.get("civic_address_apartment_number"),
+        civic_address_city = mapRec.get("civic_address_city"), 
+        civic_address_country = mapRec.get("civic_address_country"), 
+        civic_address_line1 = mapRec.get("civic_address_line1"), 
+        civic_address_line2 = mapRec.get("civic_address_line2"), 
+        civic_address_meridian = mapRec.get("civic_address_meridian"), 
+        civic_address_number_suffix = mapRec.get("civic_address_number_suffix"), 
+        civic_address_postal_code = mapRec.get("civic_address_postal_code"), 
+        civic_address_province = mapRec.get("civic_address_province"), 
+        civic_address_range = mapRec.get("civic_address_range"), 
+        civic_address_quarter = mapRec.get("civic_address_quarter"), 
+        civic_address_reserve = mapRec.get("civic_address_reserve"),
+        civic_address_section = mapRec.get("civic_address_section")
      )
 	}
 

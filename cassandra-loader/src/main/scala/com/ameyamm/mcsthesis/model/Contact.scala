@@ -6,90 +6,89 @@ import java.util.Date
  */
 class Contact (
     
-    private val id : Long,
+     val id : Long,
 
     // Contact Details
     // Person
-    private val _firstName : Option[String] = None,
-    private val _lastName : Option[String] = None,
-    private val _middleName : Option[String] = None,
-    private val _honorific : Option[String] = None,
-    private val _suffix : Option[String] = None,
+     val first_name : Option[String] = None,
+     val last_name : Option[String] = None,
+     val middle_name : Option[String] = None,
+     val honorific : Option[String] = None,
+     val suffix : Option[String] = None,
     
     // Organization
-    private val _organizationName : Option[String] = None,
-    private val _organizationName2 : Option[String] = None,
-    private val _contactType : Option[String] = None,
+     val organization_name : Option[String] = None,
+     val organization_name2 : Option[String] = None,
+     val contact_type : Option[String] = None,
 
     // Personal details
-    private val _dateOfBirth : Option[Date] = None,
-    private val _deceased : Boolean = false,
-    private val _employer : Option[String] = None,
-    private val _gender : Option[String] = None,
-    private val _industry : Option[String] = None,
-    private val _language : Option[String] = None,
-    private val _occupation : Option[String] = None,
+     val date_of_birth : Option[Date] = None,
+     val deceased : Boolean = false,
+     val employer : Option[String] = None,
+     val gender : Option[String] = None,
+     val industry : Option[String] = None,
+     val language : Option[String] = None,
+     val occupation : Option[String] = None,
     
     // Communication 
-    private val _contactMethod : Option[Set[String]] = None,
-    private val _email : Option[Set[String]] = None,
-    private val _phoneNumber : Option[String] = None,
+     val contact_methods : Option[Set[String]] = None,
+     val email : Option[Set[String]] = None,
+     val phone_number : Option[String] = None,
 
     // Civic Address
-    private val _civicAddrId : Long = -1,
-    private val _civicAddrType : Option[String] = None,
-    private val _civicAddrBuildingNum : Option[String] = None, 
-    private val _civicAddrApartmentNum : Option[String] = None, 
-    private val _civicAddrCity : Option[String] = None,
-    private val _civicAddrCountry : Option[String] = None,
-    private val _civicAddrLine1 : Option[String] = None,
-    private val _civicAddrLine2 : Option[String] = None,
-    private val _civicAddrMeridian : Option[String] = None, 
-    private val _civicAddrNumSuffix : Option[String] = None,
-    private val _civicAddrPostalCode : Option[String] = None,
-    private val _civicAddrProvince : Option[String] = None,
-    private val _civicAddrRange : Option[String] = None,
-    private val _civicAddrQuarter : Option[String] = None,
-    private val _civicAddrReserve : Option[String] = None, 
-    private val _civicAddrSection : Option[String] = None,
+     val civic_address_id : Long = -1,
+     val civic_address_type : Option[String] = None,
+     val civic_address_building_number : Option[String] = None, 
+     val civic_address_apartment_number : Option[String] = None, 
+     val civic_address_city : Option[String] = None,
+     val civic_address_country : Option[String] = None,
+     val civic_address_line1 : Option[String] = None,
+     val civic_address_line2 : Option[String] = None,
+     val civic_address_meridian : Option[String] = None, 
+     val civic_address_number_suffix : Option[String] = None,
+     val civic_address_postal_code : Option[String] = None,
+     val civic_address_province : Option[String] = None,
+     val civic_address_range : Option[String] = None,
+     val civic_address_quarter : Option[String] = None,
+     val civic_address_reserve : Option[String] = None, 
+     val civic_address_section : Option[String] = None,
 
     // Electoral details 
-    private val _federalElectorId : Option[String] = None,
-    private val _federalPoll : Option[String] = None,
-    private val _federalRiding : Option[String] = None, 
-    private val _federalSeqNum : Option[String] = None,
+     val federal_electoral_id : Option[String] = None,
+     val federal_poll : Option[String] = None,
+     val federal_riding : Option[String] = None, 
+     val federal_sequence_number : Option[String] = None,
 
     // Misc Properties
-    private val _marks : Int = 0,
-    private val _leaning : Char = '\0',
-    private val _etagName : Option[String] = None,
-    private val _etagDesc : Option[String] = None,
-    private val _etagEnumName : Option[String] = None,
-    private val _etagEnumDesc : Option[String] = None,
-    private val _etagStr : Option[String] = None,
-    private val _tagDesc : Option[String] = None,
-    private val _tagName : Option[String] = None,
-    private val _tagType : Option[String] = None,
-    private val _surveyResponse : Option[Map[String, String]] = None,
-    private val _activityListName : Option[String] = None,
-    private val _activityListStatus : Option[String] = None,
-    private val _activityType : Option[String] = None,
-    private val _activityMethod : Option[String] = None,
-    private val _activityName : Option[String] = None,
-    private val _activityNotes : Option[String] = None,
-    private val _activityPurpose : Option[String] = None,
-    private val _activityStatus : Option[String] = None,
-    private val _activityTargetName : Option[String] = None,
-    private val _activityTargetType : Option[String] = None,
+     val marks : Int = 0,
+     val leaning : Char = '\0',
+     val etag_name : Option[String] = None,
+     val etag_desc : Option[String] = None,
+     val etag_enum_name : Option[String] = None,
+     val etag_enum_desc : Option[String] = None,
+     val etag_string : Option[String] = None,
+     val tag_description : Option[String] = None,
+     val tag_name : Option[String] = None,
+     val tag_type : Option[String] = None,
+     val survey_response : Option[Map[String, String]] = None,
+     val activity_list_name : Option[String] = None,
+     val activity_list_status : Option[String] = None,
+     val activity_type : Option[String] = None,
+     val activity_method : Option[String] = None,
+     val activity_name : Option[String] = None,
+     val activity_notes : Option[String] = None,
+     val activity_purpose : Option[String] = None,
+     val activity_status : Option[String] = None,
+     val activity_target_name : Option[String] = None,
+     val activity_target_type : Option[String] = None,
 
     // Other Ids
-    private val _mailingAddressId : Long = -1,
-    private val _contactPoolId : Long = -1) extends Serializable {
+     val mailing_address_id : Long = -1,
+     val contact_pool_id : Long = -1) extends Serializable {
 
   override def toString() = {
-    id.toString() + " : " + _firstName.get  + " : " + _dateOfBirth.get + " : " + _civicAddrCity.get + " : " +_contactMethod.get.mkString(":")
+    id.toString() + " : " + first_name.get  + " : " + date_of_birth.get + " : " + civic_address_city.get + " : " + contact_methods.get.mkString(":")
   }
-  
 }
 
 object Contact extends Serializable {
