@@ -41,8 +41,9 @@ class Loader(/*val sc : SparkContext*/) extends Serializable{
 			) : Option[Set[String]] = {
 			var contactMethods = new mutable.HashSet[String]() 
       
-      val temp = collection.immutable.HashSet[Option[String]](bulkEmail,bulkMail,call)
-      temp.foreach { x => println(x) }
+      /*val temp = collection.immutable.HashSet[Option[String]](bulkEmail,bulkMail,call,canvas,email,sms)
+      temp.take(2).foreach { x => println(">>>>>>>>>>>>" + x) }*/
+      
 
 			bulkEmail match { 
 					case Some(bulkEmailVal) => if (bulkEmailVal.contains("t")) contactMethods += Contact.CONTACT_METHOD_BULK_EMAIL else contactMethods 
@@ -128,8 +129,27 @@ class Loader(/*val sc : SparkContext*/) extends Serializable{
 						mail = mapRec.get("allow_mail"),
 						voiceBroadcast = mapRec.get("allow_voice_broadcast"),
 						sms = mapRec.get("allowsms")
-						)
-				)
+				),
+        _civicAddrType = mapRec.get("civic_address_type"),
+        _civicAddrId = mapRec.get("civic_address_id") match {
+                case Some(id) => id.toLong
+                case None => -1 
+                },
+        _civicAddrBuildingNum = mapRec.get("civic_address_building_number"), 
+        _civicAddrApartmentNum = mapRec.get("civic_address_apartment_number"),
+        _civicAddrCity = mapRec.get("civic_address_city"), 
+        _civicAddrCountry = mapRec.get("civic_address_country"), 
+        _civicAddrLine1 = mapRec.get("civic_address_line1"), 
+        _civicAddrLine2 = mapRec.get("civic_address_line2"), 
+        _civicAddrMeridian = mapRec.get("civic_address_meridian"), 
+        _civicAddrNumSuffix = mapRec.get("civic_address_number_suffix"), 
+        _civicAddrPostalCode = mapRec.get("civic_address_postal_code"), 
+        _civicAddrProvince = mapRec.get("civic_address_province"), 
+        _civicAddrRange = mapRec.get("civic_address_range"), 
+        _civicAddrQuarter = mapRec.get("civic_address_quarter"), 
+        _civicAddrReserve = mapRec.get("civic_address_reserve"),
+        _civicAddrSection = mapRec.get("civic_address_section")
+     )
 	}
 
 	private def getContactRDD(sc : SparkContext) = {
@@ -146,7 +166,7 @@ class Loader(/*val sc : SparkContext*/) extends Serializable{
 
 				// create a map of t_contact column name and value for each record in tContactDataRDD
 				val tContactRDDMap = tContactDataRDD.map(rec => tContactHeaderArray.value.zip(rec).toMap)
-        tContactRDDMap.take(3).foreach(rec => println(rec.mkString(";")))
+        //tContactRDDMap.take(3).foreach(rec => println(rec.mkString(";")))
 
 				val tContactRDD = tContactRDDMap.map( mapRec => getContactObjFromMap(mapRec) ) 
         tContactRDD

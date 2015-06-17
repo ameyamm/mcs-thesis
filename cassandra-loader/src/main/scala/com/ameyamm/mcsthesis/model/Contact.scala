@@ -36,7 +36,7 @@ class Contact (
     private val _phoneNumber : Option[String] = None,
 
     // Civic Address
-    private val _civicAddressId : Long = -1,
+    private val _civicAddrId : Long = -1,
     private val _civicAddrType : Option[String] = None,
     private val _civicAddrBuildingNum : Option[String] = None, 
     private val _civicAddrApartmentNum : Option[String] = None, 
@@ -87,7 +87,7 @@ class Contact (
     private val _contactPoolId : Long = -1) extends Serializable {
 
   override def toString() = {
-    id.toString() + " : " + _firstName  + " : " + _dateOfBirth + " : " + _contactMethod.size + " : " +_contactMethod.foreach { method => method + ","}
+    id.toString() + " : " + _firstName.get  + " : " + _dateOfBirth.get + " : " + _civicAddrCity.get + " : " +_contactMethod.get.mkString(":")
   }
   
 }
