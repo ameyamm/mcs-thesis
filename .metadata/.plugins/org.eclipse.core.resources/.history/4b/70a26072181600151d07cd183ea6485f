@@ -1,0 +1,16 @@
+'''
+Created on Jun 18, 2015
+
+@author: ameya
+'''
+import psycopg2
+
+def main():
+    try : 
+        conn = psycopg2.connect("dbname = 'vote4db' user='netfore' pass='netforePWD' host='192.168.101.74'")
+    except:
+        print("Unable to connect to database")
+    return
+    
+if __name__ == '__main__':
+    main()

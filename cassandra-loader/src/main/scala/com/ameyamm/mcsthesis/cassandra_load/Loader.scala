@@ -22,77 +22,44 @@ class Loader(/*val sc : SparkContext*/) extends Serializable{
 	def loadCassandra(sc : SparkContext)
 	{
 		val contactRDD = getContactRDD(sc)
-		contactRDD.take(3).foreach(contact => println(contact))
-	}
-
-	private def removeNulls(recArray : Array[String]) : Array[String] = {
-			recArray.map( value => if (value.equals("\\N")) null else value )
-	}
-
-	private def computeContactMethodSet(
-			bulkEmail : Option[String],
-			bulkMail : Option[String],
-			call : Option[String],
-			canvas : Option[String],
-			email : Option[String],
-			mail : Option[String],
-			voiceBroadcast : Option[String],
-			sms : Option[String]
-			) : Option[Set[String]] = {
-			var contactMethods = new mutable.HashSet[String]() 
-      
-      /*val temp = collection.immutable.HashSet[Option[String]](bulkEmail,bulkMail,call,canvas,email,sms)
-      temp.take(2).foreach { x => println(">>>>>>>>>>>>" + x) }*/
-      
-
-			bulkEmail match { 
-					case Some(bulkEmailVal) => if (bulkEmailVal.contains("t")) contactMethods += Contact.CONTACT_METHOD_BULK_EMAIL else contactMethods 
-					case None => contactMethods 
-			} 
-
-			bulkMail match { 
-			case Some(bulkMailVal) => if (bulkMailVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_BULK_MAIL else contactMethods 
-			case None => contactMethods 
-			} 
-
-			call match { 
-			case Some(callVal) => if (callVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_CALL else contactMethods 
-			case None => contactMethods 
-			} 
-
-			canvas match {
-			case Some(canvasVal) => if (canvasVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_CANVAS else contactMethods 
-			case None => contactMethods 
-			} 
-
-			email match {
-			case Some(emailVal) => if (emailVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_EMAIL else contactMethods 
-			case None => contactMethods 
-			} 
-
-			mail match {
-			case Some(mailVal) => if (mailVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_MAIL else contactMethods 
-			case None => contactMethods 
-			}
-
-			voiceBroadcast match {
-			case Some(voiceBroadcastVal) => if (voiceBroadcastVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_VOICE_BROADCAST else contactMethods 
-			case None => contactMethods 
-			}
-
-			sms match {
-			case Some(smsVal) => if (smsVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_SMS else contactMethods 
-			case None => contactMethods 
-			}
-
-			if (contactMethods.size != 0)
-				Some(Set() ++ contactMethods)
-			else 
-				None
+    println(contactRDD.first())
+    contactRDD.saveToCassandra("vote4db", "contacts", 
+        SomeColumns("id",
+                    "first_name",
+                    "last_name",
+                    "middle_name",
+                    "honorific",
+                    "suffix",
+                    "organization_name",
+                    "contact_type",
+                    "date_of_birth",
+                    "dob",
+                    "deceased",
+                    "employer",
+                    "occupation",
+                    "gender",
+                    "language",
+                    "contact_methods",
+                    "civic_address_id",
+                    "civic_address_type",
+                    "civic_address_building_number",
+                    "civic_address_apartment_number",
+                    "civic_address_city",
+                    "civic_address_country",
+                    "civic_address_line1", 
+                    "civic_address_line2", 
+                    "civic_address_meridian", 
+                    "civic_address_number_suffix", 
+                    "civic_address_postal_code", 
+                    "civic_address_province", 
+                    "civic_address_range", 
+                    "civic_address_quarter", 
+                    "civic_address_reserve",
+                    "civic_address_section")
+            )
 	}
 
 	private def getContactObjFromMap(mapRec : Map[String,String]) = {
-    //println(mapRec.get("date_of_birth"))
 		new Contact(
 				id = mapRec.get("id") match {
 				case Some(id) => id.toLong
@@ -171,13 +138,83 @@ class Loader(/*val sc : SparkContext*/) extends Serializable{
 				val tContactRDD = tContactRDDMap.map( mapRec => getContactObjFromMap(mapRec) ) 
         tContactRDD
 		}
+
+  private def removeNulls(recArray : Array[String]) : Array[String] = {
+			recArray.map( value => if (value.equals("\\N")) null else value )
+	}
+
+	private def computeContactMethodSet(
+			bulkEmail : Option[String],
+			bulkMail : Option[String],
+			call : Option[String],
+			canvas : Option[String],
+			email : Option[String],
+			mail : Option[String],
+			voiceBroadcast : Option[String],
+			sms : Option[String]
+			) : Option[Set[String]] = {
+			var contactMethods = new mutable.HashSet[String]() 
+      
+      /*val temp = collection.immutable.HashSet[Option[String]](bulkEmail,bulkMail,call,canvas,email,sms)
+      temp.take(2).foreach { x => println(">>>>>>>>>>>>" + x) }*/
+      
+
+			bulkEmail match { 
+					case Some(bulkEmailVal) => if (bulkEmailVal.contains("t")) contactMethods += Contact.CONTACT_METHOD_BULK_EMAIL else contactMethods 
+					case None => contactMethods 
+			} 
+
+			bulkMail match { 
+			case Some(bulkMailVal) => if (bulkMailVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_BULK_MAIL else contactMethods 
+			case None => contactMethods 
+			} 
+
+			call match { 
+			case Some(callVal) => if (callVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_CALL else contactMethods 
+			case None => contactMethods 
+			} 
+
+			canvas match {
+			case Some(canvasVal) => if (canvasVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_CANVAS else contactMethods 
+			case None => contactMethods 
+			} 
+
+			email match {
+			case Some(emailVal) => if (emailVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_EMAIL else contactMethods 
+			case None => contactMethods 
+			} 
+
+			mail match {
+			case Some(mailVal) => if (mailVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_MAIL else contactMethods 
+			case None => contactMethods 
+			}
+
+			voiceBroadcast match {
+			case Some(voiceBroadcastVal) => if (voiceBroadcastVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_VOICE_BROADCAST else contactMethods 
+			case None => contactMethods 
+			}
+
+			sms match {
+			case Some(smsVal) => if (smsVal.equals("t")) contactMethods += Contact.CONTACT_METHOD_SMS else contactMethods 
+			case None => contactMethods 
+			}
+
+			if (contactMethods.size != 0)
+				Some(Set() ++ contactMethods)
+			else 
+				None
+	}
+
+
 }
 
 object Loader extends Serializable{
 
 	def main(args : Array[String]) {
 		val conf = new SparkConf().setAppName("Cassandra Loading")
-				.set("spark.cassandra.connection.host","192.168.101.11")
+				.set("spark.cassandra.connection.host","192.168.101.12")
+	//			.set("spark.cassandra.connection.native.port","9042")
+	//			.set("spark.cassandra.connection.rpc.port","9160")
 				.set("spark.cassandra.auth.username","netfore")
 				.set("spark.cassandra.auth.password","netforePWD")
 				.set("spark.storage.memoryFraction","0")

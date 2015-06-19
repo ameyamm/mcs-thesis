@@ -1,0 +1,103 @@
+package com.ameyamm.mcsthesis.model
+
+import java.util.Date
+/**
+ * @author ameya
+ */
+class Contact (
+    
+     val id : Long,
+
+    // Contact Details
+    // Person
+     val first_name : String = None,
+     val last_name : String = None,
+     val middle_name : String] = None,
+     val honorific : String = None,
+     val suffix : String = None,
+    
+    // Organization
+     val organization_name : String = None,
+     val organization_name2 : String = None,
+     val contact_type : String = None,
+
+    // Personal details
+     val date_of_birth : Date = None,
+     val deceased : Boolean = false,
+     val employer : String = None,
+     val gender : String = None,
+     val industry : String = None,
+     val language : String = None,
+     val occupation : String = None,
+    
+    // Communication 
+     val contact_method : Set[String] = None,
+     val email : Set[String] = None,
+     val phone_number : String = None,
+
+    // Civic Address
+     val civic_address_id : Long = -1,
+     val civic_address_type : String = None,
+     val civic_address_building_number : String = None, 
+     val civic_address_apartment_number : String = None, 
+     val civic_address_city : String = None,
+     val civic_address_country : String = None,
+     val civic_address_line1 : String = None,
+     val civic_address_line2 : String = None,
+     val civic_address_meridian : String = None, 
+     val civic_address_number_suffix : String = None,
+     val civic_address_postal_code : String = None,
+     val civic_address_province : String = None,
+     val civic_address_range : String = None,
+     val civic_address_quarter : String = None,
+     val civic_address_reserve : String = None, 
+     val civic_address_section : String = None,
+
+    // Electoral details 
+     val federal_electoral_id : String = None,
+     val federal_poll : String = None,
+     val federal_riding : String = None, 
+     val federal_sequence_number : String = None,
+
+    // Misc Properties
+     val marks : Int = 0,
+     val leaning : Char = '\0',
+     val etag_name : String = None,
+     val etag_desc : String = None,
+     val etag_enum_name : String = None,
+     val etag_enum_desc : String = None,
+     val etag_string : String = None,
+     val tag_description : String = None,
+     val tag_name : String = None,
+     val tag_type : String = None,
+     val survey_response : Map[String, String] = None,
+     val activity_list_name : String = None,
+     val activity_list_status : String = None,
+     val activity_type : String = None,
+     val activity_method : String = None,
+     val activity_name : String = None,
+     val activity_notes : String = None,
+     val activity_purpose : String = None,
+     val activity_status : String = None,
+     val activity_target_name : String = None,
+     val activity_target_type : String = None,
+
+    // Other Ids
+     val mailing_address_id : Long = -1,
+     val contact_pool_id : Long = -1) extends Serializable {
+
+  override def toString() = {
+    id.toString() + " : " + first_name.get  + " : " + dateOfBirth.get + " : " + civicAddrCity.get + " : " +_contactMethod.get.mkString(":")
+  }
+}
+
+object Contact extends Serializable {
+  val CONTACT_METHOD_BULK_EMAIL = "bulk_email" 
+  val CONTACT_METHOD_BULK_MAIL = "bulk_mail"
+  val CONTACT_METHOD_EMAIL = "email"
+  val CONTACT_METHOD_MAIL = "mail"
+  val CONTACT_METHOD_CANVAS = "canvas"
+  val CONTACT_METHOD_CALL = "call"
+  val CONTACT_METHOD_SMS = "sms"
+  val CONTACT_METHOD_VOICE_BROADCAST = "voice_broadcast"
+}

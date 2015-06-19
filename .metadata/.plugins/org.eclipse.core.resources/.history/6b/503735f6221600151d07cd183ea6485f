@@ -1,0 +1,57 @@
+'''
+Created on Jun 18, 2015
+
+@author: ameya
+'''
+
+class Contact:
+    '''
+    classdocs
+    '''
+    CONTACT_METHODS_BULK_EMAIL = "bulk_email"
+    CONTACT_METHODS_BULK_MAIL  = "bulk_mail"
+    CONTACT_METHODS_EMAIL      = "email"
+    CONTACT_METHODS_MAIL       = "mail"
+    CONTACT_METHODS_CALL       = "call"
+    CONTACT_METHODS_CANVAS     = "canvas"
+    CONTACT_METHODS_SMS        = "sms"
+    CONTACT_METHODS_VOICE_BROADCAST = "voice_broadcast"
+    
+    def __init__(self, id, ):
+        '''
+        Constructor
+        '''
+        # identification attributes
+        self.id = -1 
+        self.first_name = None
+        middle_name = None
+        last_name = None
+        contact_type = None
+        
+        # behavorial attributes
+        contact_methods = set()
+        
+        # electoral attributes
+        federal_elector_id = None
+        federal_poll = None
+        federal_riding = None
+        federal_sequence_number = None
+        
+        # demographic attributes
+        has_email = None
+        
+        # location attributes
+        civic_address_type = None 
+        civic_address_city = None
+        civic_address_province = None
+        civic_address_country = None 
+        civic_address_postal_code = None
+        civic_address_street_type = None
+        civic_address_township = None
+        
+        
+        
+        
+        
+    
+        

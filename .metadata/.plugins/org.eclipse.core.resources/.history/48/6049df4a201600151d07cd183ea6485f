@@ -1,0 +1,23 @@
+'''
+Created on Jun 18, 2015
+
+@author: ameya
+'''
+
+class Contact:
+    '''
+    classdocs
+    '''
+    def __init__(self, params):
+        '''
+        Constructor
+        '''
+        id = -1 
+        first_name = None
+        last_name = None
+        contact_methods = set()
+        
+        
+        
+    
+        

@@ -12,5 +12,8 @@
 <booleanAttribute key="M2_UPDATE_SNAPSHOTS" value="false"/>
 <stringAttribute key="M2_USER_SETTINGS" value=""/>
 <booleanAttribute key="M2_WORKSPACE_RESOLUTION" value="false"/>
+<mapAttribute key="org.eclipse.debug.core.environmentVariables">
+<mapEntry key="SPARK_LOCAL_IP" value="172.16.0.6"/>
+</mapAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="/home/ameya/uOttawa/MCS/Thesis/Work/workspace/mcs-thesis/cassandra-loader"/>
 </launchConfiguration>
