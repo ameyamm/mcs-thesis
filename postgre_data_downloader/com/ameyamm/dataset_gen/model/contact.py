@@ -57,7 +57,10 @@ class Contact:
         Constructor
         '''
         # identification attributes
-        self.id = id 
+        self.contact_id = contact_id 
+        self.campaign_id = None
+        self.region_id = None
+        self.activity_id = None
         self.first_name = first_name 
         self.middle_name = middle_name
         self.last_name = last_name
