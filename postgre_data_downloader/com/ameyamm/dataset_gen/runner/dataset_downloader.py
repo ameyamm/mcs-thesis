@@ -22,12 +22,13 @@ def getDBConnection():
         print("Unable to connect to database")
         return None
 
-def loadTContact(conn):
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cursor.execute(queries.SELECT_TCONTACT)
-    for contactRec in cursor:
+def loadTContact(t_contact_conn, t_marks_conn):
+    t_contact_cursor = t_contact_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    t_marks_cursor = t_marks_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    t_contact_cursor.execute(queries.SELECT_TCONTACT)
+    for contactRec in t_contact_cursor:
         contact = Contact(
-                          contact_id = contactRec['id'],
+                          contact_id = contactRec['contact_id'],
                           first_name= contactRec['first_name'],
                           middle_name=contactRec['middle_name'],
                           last_name=contactRec['last_name'],
@@ -72,15 +73,22 @@ def loadTContact(conn):
             contact.townhouse_or_apartment = Contact.CONTACT_TOWNHOUSE
         
         print("{}::{}::{}::{}::{}".format(contactRec["first_name"], 
-                                      contactRec["id"],
+                                      contactRec['contact_id'],
                                       contactRec['email_preferred'],
                                       contactRec['civic_address_building_number'],
                                       contactRec['civic_address_apartment_number']))
+        
+        t_marks_cursor.execute(queries.SELECT_T_MARKS.format(contactRec["contact_id"]))
+        for t_marks_row in t_marks_cursor:
+            print("{} :: {} :: {}".format(contact.contact_id, t_marks_row['mark'], t_marks_row['leaning'] ))
+                               
     return
     
 def main():
-    conn = getDBConnection()        
-    loadTContact(conn)
+    contactConn = getDBConnection()        
+    markConn = getDBConnection()        
+    loadTContact(contactConn, markConn)
+    
 
     return
     
