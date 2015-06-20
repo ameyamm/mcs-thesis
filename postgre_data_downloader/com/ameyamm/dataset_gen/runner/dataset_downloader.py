@@ -22,9 +22,14 @@ def getDBConnection():
         print("Unable to connect to database")
         return None
 
-def loadTContact(t_contact_conn, t_marks_conn):
+def loadTarget():
+    t_contact_conn = getDBConnection()        
+    t_marks_conn = getDBConnection()     
+    t_case_file_conn = getDBConnection()   
+
     t_contact_cursor = t_contact_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     t_marks_cursor = t_marks_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
     t_contact_cursor.execute(queries.SELECT_TCONTACT)
     for contactRec in t_contact_cursor:
         contact = Contact(
@@ -72,22 +77,30 @@ def loadTContact(t_contact_conn, t_marks_conn):
         else:
             contact.townhouse_or_apartment = Contact.CONTACT_TOWNHOUSE
         
-        print("{}::{}::{}::{}::{}".format(contactRec["first_name"], 
-                                      contactRec['contact_id'],
-                                      contactRec['email_preferred'],
-                                      contactRec['civic_address_building_number'],
-                                      contactRec['civic_address_apartment_number']))
+        t_case_file_cursor = t_case_file_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        t_case_file_cursor.execute(queries.SELECT_T_CASE_FILE_FILED.format(contact.contact_id))
+        row = t_case_file_cursor.fetchone()
+        contact.cases_filed = row['cases_filed']
+        
+        t_case_file_cursor.execute(queries.SELECT_T_CASE_FILE_CLOSED.format(contact.contact_id))
+        row = t_case_file_cursor.fetchone()
+        contact.cases_closed = row['cases_closed']
+        t_case_file_cursor.close()
+        
+        print("{}::{}::{}::{}".format(
+                                          contact.contact_id,
+                                          contact.first_name,
+                                          contact.cases_closed,
+                                          contact.cases_filed))
         
         t_marks_cursor.execute(queries.SELECT_T_MARKS.format(contactRec["contact_id"]))
         for t_marks_row in t_marks_cursor:
-            print("{} :: {} :: {}".format(contact.contact_id, t_marks_row['mark'], t_marks_row['leaning'] ))
+            print("\t{} :: {} :: {}".format(contact.contact_id, t_marks_row['mark'], t_marks_row['leaning'] ))
                                
     return
     
 def main():
-    contactConn = getDBConnection()        
-    markConn = getDBConnection()        
-    loadTContact(contactConn, markConn)
+    loadTarget()
     
 
     return
