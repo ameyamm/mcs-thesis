@@ -84,6 +84,7 @@ class Contact:
         self.cases_closed = 0 
         self.etags = None # set
         self.survey_responses = None # dictionary[Survey Ques, Survey Resp]
+        self.tags = None # set
 
         # electoral attributes
         self.federal_elector_id = federal_elector_id
