@@ -6,7 +6,6 @@ Created on Jun 18, 2015
 
 
 
-import psycopg2
 import psycopg2.extras
 
 from com.ameyamm.dataset_gen.runner import queries
@@ -26,11 +25,20 @@ def loadTarget():
     t_contact_conn = getDBConnection()        
     t_marks_conn = getDBConnection()     
     t_case_file_conn = getDBConnection()   
+    t_etag_conn = getDBConnection()
+    t_tag_conn = getDBConnection()
+    t_contact_campaign_region_conn = getDBConnection()
+    t_analytics_contact_conn = getDBConnection()
 
     t_contact_cursor = t_contact_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     t_marks_cursor = t_marks_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    t_contact_cursor.execute(queries.SELECT_TCONTACT)
+    t_case_file_cursor = t_case_file_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    t_etag_cursor = t_etag_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    t_tag_cursor = t_tag_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    t_contact_campaign_region_cursor = t_contact_campaign_region_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    t_analytics_contact_cursor = t_analytics_contact_conn.cursor()
+   
+    t_contact_cursor.execute(queries.SELECT_T_CONTACT)
     for contactRec in t_contact_cursor:
         contact = Contact(
                           contact_id = contactRec['contact_id'],
@@ -59,6 +67,7 @@ def loadTarget():
                           civic_address_township = contactRec['civic_address_street_type']
                         )
 
+        
         contact.setContactMethods(allow_bulk_email = contactRec['allow_bulk_email'],
                                   allow_bulk_mail = contactRec['allow_bulk_mail'],
                                   allow_email = contactRec['allow_email'],
@@ -79,24 +88,75 @@ def loadTarget():
         
         t_case_file_cursor = t_case_file_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         t_case_file_cursor.execute(queries.SELECT_T_CASE_FILE_FILED.format(contact.contact_id))
-        row = t_case_file_cursor.fetchone()
-        contact.cases_filed = row['cases_filed']
+        caseFiledRow = t_case_file_cursor.fetchone()
+        contact.cases_filed = caseFiledRow['cases_filed']
         
         t_case_file_cursor.execute(queries.SELECT_T_CASE_FILE_CLOSED.format(contact.contact_id))
-        row = t_case_file_cursor.fetchone()
-        contact.cases_closed = row['cases_closed']
-        t_case_file_cursor.close()
+        caseClosedRow = t_case_file_cursor.fetchone()
+        contact.cases_closed = caseClosedRow['cases_closed']
         
-        print("{}::{}::{}::{}".format(
-                                          contact.contact_id,
-                                          contact.first_name,
-                                          contact.cases_closed,
-                                          contact.cases_filed))
+        # find all associated tags
+        t_tag_cursor.execute(queries.SELECT_T_TAG_QUERY.format(contact.contact_id))
+        for tagRow in t_tag_cursor:
+            contact.addTags(tagRow['name'])
         
-        t_marks_cursor.execute(queries.SELECT_T_MARKS.format(contactRec["contact_id"]))
-        for t_marks_row in t_marks_cursor:
-            print("\t{} :: {} :: {}".format(contact.contact_id, t_marks_row['mark'], t_marks_row['leaning'] ))
-                               
+        # find the campaigns and regions associated to create duplicate contacts
+        t_contact_campaign_region_cursor.execute(
+                            queries.SELECT_DISTINCT_CONTACT_CAMPAIGN_REGION.format(contact.contact_id, contact.contact_id))
+        
+        copyContact = None
+        for distinctContactRow in t_contact_campaign_region_cursor:
+            copyContact = contact.copy()
+            copyContact.campaign_id = distinctContactRow['campaign_id']
+            copyContact.region_id = distinctContactRow['region_id']
+            
+            # get marks 
+            if copyContact.campaign_id is not None and copyContact.region_id is not None :  
+                t_marks_cursor.execute(queries.SELECT_T_CONTACT_MARKS.format(
+                                                                         copyContact.contact_id, 
+                                                                         copyContact.campaign_id,
+                                                                         copyContact.region_id))
+                marksRow = t_marks_cursor.fetchone()
+                if marksRow is not None : 
+                    copyContact.mark = marksRow['mark']
+                    copyContact.leaning = marksRow['leaning']
+                
+            t_etag_cursor.execute(queries.SELECT_T_ENUM_TAG.format(
+                                                                   copyContact.contact_id,
+                                                                   ' = ' + str(copyContact.campaign_id) if copyContact.campaign_id is not None else 'is null',
+                                                                   ' = ' + str(copyContact.region_id) if copyContact.region_id is not None else 'is null'))
+            
+            for etagRow in t_etag_cursor:
+                copyContact.addEtags(etagRow['etag_name'],etagRow['etag_enum'])
+            
+            insertQuery = copyContact.getInsertQueryString()
+            t_analytics_contact_cursor.execute(insertQuery[0],insertQuery[1])    
+            #print("{}".format(copyContact.getInsertQueryString()))
+                
+            
+            
+        if copyContact is None:
+            insertQuery = contact.getInsertQueryString()
+            t_analytics_contact_cursor.execute(insertQuery[0],insertQuery[1])
+
+    t_analytics_contact_conn.commit()
+    
+    t_contact_cursor.close()
+    t_marks_cursor.close()
+    t_case_file_cursor.close()
+    t_etag_cursor.close()
+    t_tag_cursor.close()
+    t_contact_campaign_region_cursor.close()
+    t_analytics_contact_cursor.close()
+    
+    t_contact_conn.close()
+    t_marks_conn.close()
+    t_case_file_conn.close()
+    t_etag_conn.close()
+    t_tag_conn.close()
+    t_contact_campaign_region_conn.close()
+    t_analytics_contact_conn.close()
+    
     return
     
 def main():
