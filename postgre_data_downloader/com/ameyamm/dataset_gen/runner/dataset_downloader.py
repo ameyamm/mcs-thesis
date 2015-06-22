@@ -104,6 +104,7 @@ def loadTarget():
         t_contact_campaign_region_cursor.execute(
                             queries.SELECT_DISTINCT_CONTACT_CAMPAIGN_REGION.format(contact.contact_id, contact.contact_id))
         
+        print(contact.first_name)
         copyContact = None
         for distinctContactRow in t_contact_campaign_region_cursor:
             copyContact = contact.copy()
