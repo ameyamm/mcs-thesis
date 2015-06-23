@@ -41,7 +41,7 @@ class Contact:
                                         "language": "%s",
                                         "occupation": "%s",
                                         "contact_methods": "%s",
-                                        "mark": "%d",
+                                        "mark": "%s",
                                         "leaning": "%s",
                                         "cases_filed": "%d",
                                         "cases_closed": "%d",

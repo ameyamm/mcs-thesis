@@ -4,6 +4,7 @@ Created on Jun 18, 2015
 @author: ameya
 '''
 
+from __future__ import generators 
 import threading
 import logging
 
@@ -16,6 +17,14 @@ logging.basicConfig(filename = "datadownload-upload.log",
         level=logging.DEBUG,
         format='%(threadName)-10s : %(message)s',
         )
+
+def resultSetGenerator(cursor, size = 1000):
+    while True:
+        results = cursor.fetchmany(size)
+        if not results:
+            break 
+        for result in results:
+            yield result
 
 class dbthread(threading.Thread):
     def __init__(self, threadProvince):
@@ -48,7 +57,7 @@ def loadTarget(threadProvince, threadName = None):
     t_analytics_contact_cursor = t_analytics_contact_conn.cursor()
    
     t_contact_cursor.execute(queries.SELECT_T_CONTACT.format(threadProvince))
-    for contactRec in t_contact_cursor:
+    for contactRec in resultSetGenerator(t_contact_cursor):
         contact = Contact(
                           contact_id = contactRec['contact_id'],
                           first_name= contactRec['first_name'],
@@ -146,7 +155,7 @@ def loadTarget(threadProvince, threadName = None):
 
             try : 
                 t_analytics_contact_cursor.execute(insertQuery[0],insertQuery[1])    
-            except:
+            except Exception as e :
                 logging.debug("Exception CopyContact : {} : {}".format(
                                                     copyContact.contact_id,e))
                 pass
@@ -157,12 +166,12 @@ def loadTarget(threadProvince, threadName = None):
             insertQuery = contact.getInsertQueryString()
             try : 
                 t_analytics_contact_cursor.execute(insertQuery[0],insertQuery[1])    
-            except Exception, e:
+            except Exception as e:
                 logging.debug("Exception Contact: {} : {}".format(
                                                     contact.contact_id,e))
                 pass
 
-    t_analytics_contact_conn.commit()
+        t_analytics_contact_conn.commit()
     
     record_cursor.close()
     t_contact_cursor.close()
@@ -175,13 +184,42 @@ def loadTarget(threadProvince, threadName = None):
     return
     
 def main():
-    provinces = [ 'AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE',
-            'QC', 'SK', 'YT' ]
+    provinces_set1 = [ 'AB', 'NU', 'MB' ]
+    provinces_set2 = [ 'NB', 'NL', 'ON' ]
+    provinces_set3 = [ 'NT', 'BC', 'NS']
+    provinces_set4 = [ 'PE', 'QC', 'SK', 'YT' ]
 
-    threads = [dbthread(province) for province in provinces]
+    threads = [dbthread(province) for province in provinces_set1]
 
     for thread in threads:
         thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    threads = [dbthread(province) for province in provinces_set2]
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    threads = [dbthread(province) for province in provinces_set3]
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    threads = [dbthread(province) for province in provinces_set4]
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
 
     return
     
