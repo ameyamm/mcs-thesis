@@ -23,7 +23,7 @@ class Loader(/*val sc : SparkContext*/) extends Serializable{
 	{
 		val contactRDD = getContactRDD(sc)
     println(contactRDD.first())
-    contactRDD.saveToCassandra("vote4db", "contacts", 
+    contactRDD.saveToCassandra("vote4db", "contact", 
         SomeColumns("id",
                     "first_name",
                     "last_name",
@@ -212,6 +212,8 @@ object Loader extends Serializable{
 
 	def main(args : Array[String]) {
 		val conf = new SparkConf().setAppName("Cassandra Loading")
+        .set("fs.hdfs.impl", classOf[org.apache.hadoop.hdfs.DistributedFileSystem].getName())
+        .set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName)
 				.set("spark.cassandra.connection.host","192.168.101.12")
 	//			.set("spark.cassandra.connection.native.port","9042")
 	//			.set("spark.cassandra.connection.rpc.port","9160")

@@ -1,0 +1,36 @@
+'''
+Created on Jun 19, 2015
+
+@author: ameya
+'''
+SELECT_TCONTACT = """
+                    select 
+                        id, 
+                        first_name,
+                        middle_name,
+                        last_name, 
+                        contact_type,
+                        organization_name, 
+                        date_of_birth,
+                        deceased,
+                        employer,
+                        gender,
+                        industry,
+                        language,
+                        occupation,
+                        federal_elector_id,
+                        federal_poll,
+                        federal_riding,
+                        federal_sequence_number,
+                        email_preferred,
+                        allow_bulk_mail,
+                        allow_bulk_email,
+                        allow_email,
+                        allow_mail,
+                        allowsms,
+                        allow_call,
+                        allow_voice_broadcast,
+                        allow_canvas,
+                        
+                        
+                        

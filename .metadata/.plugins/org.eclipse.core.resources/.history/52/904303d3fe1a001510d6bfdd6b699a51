@@ -1,0 +1,10 @@
+package com.ameyamm.mcsthesis.dataset_generator
+
+/**
+ * @author ameya
+ */
+object DatasetGenerator {
+  def main(args : Array[String]) {
+    
+  }
+}

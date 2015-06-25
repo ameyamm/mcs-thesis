@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;postgre_data_downloader/com/ameyamm/dataset-gen&apos; to &apos;dataset_gen&apos;" description="Rename resource &apos;dataset-gen&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="com/ameyamm/dataset-gen" name="dataset_gen" stamp="1434737890170" updateReferences="true"/>
+</session>

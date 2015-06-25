@@ -1,0 +1,28 @@
+package com.ameyamm.test.testspark
+
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.SparkConf
+import org.apache.spark.rdd.RDD
+import com.datastax.spark.connector._
+
+
+/**
+ * @author ${user.name}
+ */
+object App {
+  
+  
+  def main(args : Array[String]) {
+    val conf = new SparkConf().setAppName("Connector test")
+        .set("spark.cassandra.connection.host","192.168.101.12")
+  //      .set("spark.cassandra.connection.native.port","9042")
+  //      .set("spark.cassandra.connection.rpc.port","9160")
+        .set("spark.cassandra.auth.username","netfore")
+        .set("spark.cassandra.auth.password","netforePWD")
+    val rdd = sc.cassandraTable("test", "words")
+    rdd.toArray.foreach(println)
+
+  }
+
+}

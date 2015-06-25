@@ -1,0 +1,8 @@
+package com.ameyamm.mcsthesis.dataset_generator
+
+/**
+ * @author ameya
+ */
+object DatasetGenerator {
+  
+}
