@@ -39,10 +39,10 @@ class dbthread(threading.Thread):
 
 def getDBConnection():
     try :
-        return psycopg2.connect(host = "192.168.100.74",
-                                database = "vote4db",
-                                user = 'netfore',
-                                password ='netforePWD')
+        return psycopg2.connect(host = "XXX.XXX.XXX.XX",
+                                database = "XXXXXXX",
+                                user = 'XXXXXXX',
+                                password ='XXXXXXXXXX')
     except:
         print("Unable to connect to database")
         return None
