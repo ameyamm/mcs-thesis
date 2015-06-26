@@ -9,18 +9,43 @@ import org.joda.time.format.DateTimeFormat
  * @author ameya
  */
 object Util {
-  def getSetFromString( setString : String ) : Set[String] = {
-    val setPartOfString = setString.substring(setString.indexOf('[') + 1, setString.lastIndexOf(']'))
-    setPartOfString.split('|').map(_.trim).toSet 
+  def getSetFromString( setStringOption : Option[String] ) : Option[Set[String]] = {
+    
+    setStringOption match {
+      case Some(setString) => { 
+        val setPartOfString = setString.substring(setString.indexOf('[') + 1, setString.lastIndexOf(']'))
+        Some(setPartOfString.split('|').map(_.trim).toSet) 
+      } 
+      case None => None
+    }
   }
   
-  def getBooleanFromString( booleanString : String ) : Boolean = {
-    if (booleanString.equalsIgnoreCase("f")) true 
-    else false 
+  def getBooleanFromString( booleanStringOption : Option[String] ) : Option[Boolean] = {
+    booleanStringOption match {
+      case Some(booleanString) => {
+        if (booleanString.equalsIgnoreCase("f")) Some(true) 
+        else Some(false) 
+      }
+      case None => None
+    }
+    
   }
   
-  def getDateFromString( dateString : String ) : DateTime = {
-    val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
-    dateFormatter.parseDateTime(dateString)
+  def getDateFromString( dateStringOption : Option[String] ) : Option[DateTime] = {
+    dateStringOption match {
+      case Some(dateString) => {
+        val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
+        Some(dateFormatter.parseDateTime(dateString))
+      }
+      case None => None
+    }
   }
+  
+  def getStringFromOptionString( stringOption : Option[String] ) : String = {
+    stringOption match {
+      case Some(string) => string
+      case None => "None"
+    }
+  }
+
 }
