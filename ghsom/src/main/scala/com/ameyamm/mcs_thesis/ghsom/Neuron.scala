@@ -5,15 +5,16 @@ package com.ameyamm.mcs_thesis.ghsom
  */
 
 import scala.collection.mutable
+import scala.collection.immutable
 
-class Neuron (private val _row : String, private val _column : String, private val _weightVector : Vector[Dimension]){
+class Neuron (private val _row : String, private val _column : String, private val _attributeVector : immutable.Vector[DimensionType] = null){
   private val mappedInputs : mutable.ListBuffer[Instance] = mutable.ListBuffer()
   
   def row : String = _row 
   
   def column : String = _column
   
-  def weightVector : Vector[Dimension] = _weightVector
+  def attributeVector : Vector[DimensionType] = _attributeVector
   
   def addToMappedInputs(instance : Instance) {
     mappedInputs += instance
@@ -22,7 +23,7 @@ class Neuron (private val _row : String, private val _column : String, private v
 }
 
 object Neuron {
-  def apply(row : String, column: String, weightVector : Vector[Dimension]) : Neuron = {
-    new Neuron(row, column, weightVector)
+  def apply(row : String, column: String, attributeVector : immutable.Vector[DimensionType]) : Neuron = {
+    new Neuron(row, column, attributeVector)
   }
 }
