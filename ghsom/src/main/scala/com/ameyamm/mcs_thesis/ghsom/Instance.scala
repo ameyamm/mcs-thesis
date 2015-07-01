@@ -5,11 +5,18 @@ package com.ameyamm.mcs_thesis.ghsom
  */
 
 import scala.collection.immutable
+import jdk.nashorn.internal.ir.annotations.Immutable
 
-class Instance(label : String, attributeVector : immutable.Vector[Dimension] ) {
+class Instance( private val _label : String, private val _attributeVector : immutable.Vector[DimensionType] ) {
   
-  def getLabel = label 
+  def label = _label 
   
-  def getAttributeVector = attributeVector
+  def attributeVector = _attributeVector
   
+}
+
+object Instance {
+  def apply(label : String, attributeVector : immutable.Vector[DimensionType]) = {
+    new Instance (label, attributeVector)
+  }
 }
