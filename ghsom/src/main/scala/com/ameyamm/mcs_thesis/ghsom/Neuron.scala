@@ -20,6 +20,16 @@ class Neuron (private val _row : String, private val _column : String, private v
     mappedInputs += instance
   }
   
+  override def toString() : String = {
+    var neuronString = "[" + row + "," + column + "]" + "(" + attributeVector.size + ")" + ":" + "["
+    
+    _attributeVector.foreach( attrib => neuronString += (attrib.toString() + ",") )
+    
+    neuronString += "]"
+    
+    neuronString
+  }
+  
 }
 
 object Neuron {
