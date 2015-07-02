@@ -11,10 +11,21 @@ class SOMLayer( private val _rowDim : Int, private val _colDim : Int ) {
                                           Neuron(row = rowParam.toString(), 
                                           column = colParam.toString(), 
                                           attributeVector = Utils.generateRandomVector(DoubleDimension.getRandomDimensionValue)))
+                                          
+  def display() {
+    neurons.foreach( vectorRow => vectorRow.foreach(neuron => println(neuron))) 
+  }
+                             
 }
 
 object SOMLayer {
   def apply(rowDim : Int, colDim : Int) = {
     new SOMLayer(rowDim, colDim)
+  }
+  
+  def main(args : Array[String]) {
+    val somlayer = SOMLayer(4,4)
+    somlayer.display()
+    println(somlayer)
   }
 }
