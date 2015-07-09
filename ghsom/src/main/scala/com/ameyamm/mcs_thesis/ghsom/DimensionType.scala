@@ -7,7 +7,8 @@ package com.ameyamm.mcs_thesis.ghsom
 /**
  * Trait for individual dimension of an attribute vector
  */
-trait DimensionType {
+trait DimensionType extends Serializable with Ordered[DimensionType] {
   def getRandomDimensionValue() : DimensionType
   def equals( d2 : DimensionType ) : Boolean
+  override def toString() : String
 }

@@ -2,7 +2,6 @@ package com.ameyamm.mcs_thesis.utils
 
 import scala.collection.immutable
 import com.ameyamm.mcs_thesis.ghsom.DimensionType
-import com.ameyamm.mcs_thesis.utils.Constants
 
 /**
  * @author ameya

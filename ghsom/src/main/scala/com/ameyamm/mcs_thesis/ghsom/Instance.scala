@@ -4,10 +4,9 @@ package com.ameyamm.mcs_thesis.ghsom
  * @author ameya
  */
 
-import scala.collection.immutable
 import jdk.nashorn.internal.ir.annotations.Immutable
 
-class Instance( private val _label : String, private val _attributeVector : immutable.Vector[DimensionType] ) {
+class Instance( private val _label : String, private val _attributeVector : Array[_ <: DimensionType] ) extends Serializable {
   
   def label = _label 
   
@@ -15,8 +14,8 @@ class Instance( private val _label : String, private val _attributeVector : immu
   
 }
 
-object Instance {
-  def apply(label : String, attributeVector : immutable.Vector[DimensionType]) = {
+object Instance extends Serializable {
+  def apply(label : String, attributeVector : Array[_ <: DimensionType]) = {
     new Instance (label, attributeVector)
   }
 }
