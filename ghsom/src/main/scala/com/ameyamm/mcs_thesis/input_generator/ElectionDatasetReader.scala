@@ -15,6 +15,7 @@ import org.apache.spark.rdd.RDD
 import com.ameyamm.mcs_thesis.ghsom.Instance
 import com.ameyamm.mcs_thesis.ghsom.DimensionType
 import com.ameyamm.mcs_thesis.ghsom.DoubleDimension
+import com.ameyamm.mcs_thesis.model.Contact
 
 class ElectionDatasetReader(private val datasetRDD : CassandraRDD[CassandraRow]) extends DatasetReader {
   
@@ -34,25 +35,86 @@ class ElectionDatasetReader(private val datasetRDD : CassandraRDD[CassandraRow])
     var maxVector : Array[DoubleDimension] = Array.fill(vectorSize)(DoubleDimension.MinValue)
     var minVector : Array[DoubleDimension] = Array.fill(vectorSize)(DoubleDimension.MaxValue)
     
-    var instanceDataset = dataset.map( row => convertToInstance(row) )
+    var contactDataset = dataset.map( row => convertToContact(row) )
     
    // instanceDataset = 
-    instanceDataset.foreach( 
-                              instance => { 
-                                val attribVector = instance.attributeVector.map( 
-                                                      x => x match { 
-                                                        case dd : DoubleDimension => dd 
-                                                        case _ => throw new ClassCastException  
-                                                      }  
-                                                   ) 
-                                for ( i <- 0 until attribVector.size ) { 
-                                    maxVector(i) = if (attribVector(i) > maxVector(i)) attribVector(i) else maxVector(i)
-                                    minVector(i) = if (attribVector(i) < minVector(i)) attribVector(i) else minVector(i) 
-                                } 
-    //                            instance
+    val attribMap = contactDataset.flatMap( 
+                              contact => { 
+                                List(
+                                  ("dage",contact.dage match { case Some(value) => value ; case None => null }),
+                                  ("dancstry1",contact.dancstry1 match { case Some(value) => value ; case None => null }),
+                                  ("dancstry2",contact.dancstry2 match { case Some(value) => value ; case None => null }),
+                                  ("ddepart",contact.ddepart match { case Some(value) => value ; case None => null }),
+                                  ("dhispanic",contact.dhispanic match { case Some(value) => value ; case None => null }),
+                                  ("dhour89",contact.dhour89 match { case Some(value) => value ; case None => null }),
+                                  ("dhours",contact.dhours match { case Some(value) => value ; case None => null }),
+                                  ("dincome1",contact.dincome1 match { case Some(value) => value ; case None => null }),
+                                  ("dincome2",contact.dincome2 match { case Some(value) => value ; case None => null }),
+                                  ("dincome3",contact.dincome3 match { case Some(value) => value ; case None => null }),
+                                  ("dincome4",contact.dincome4 match { case Some(value) => value ; case None => null }),
+                                  ("dincome5",contact.dincome5 match { case Some(value) => value ; case None => null }),
+                                  ("dincome6",contact.dincome6 match { case Some(value) => value ; case None => null }),
+                                  ("dincome7",contact.dincome7 match { case Some(value) => value ; case None => null }),
+                                  ("dincome8",contact.dincome8 match { case Some(value) => value ; case None => null }),
+                                  ("dindustry",contact.dindustry match { case Some(value) => value ; case None => null }),
+                                  ("doccup",contact.doccup match { case Some(value) => value ; case None => null }),
+                                  ("dpob",contact.dpob match { case Some(value) => value ; case None => null }),
+                                  ("dpoverty",contact.dpoverty match { case Some(value) => value ; case None => null }),
+                                  ("dpwgt1",contact.dpwgt1 match { case Some(value) => value ; case None => null }),
+                                  ("drearning",contact.drearning match { case Some(value) => value ; case None => null }),
+                                  ("drpincome",contact.drpincome match { case Some(value) => value ; case None => null }),
+                                  ("dtravtime",contact.dtravtime match { case Some(value) => value ; case None => null }),
+                                  ("dweek89",contact.dweek89 match { case Some(value) => value ; case None => null }),
+                                  ("dyrsserv",contact.dyrsserv match { case Some(value) => value ; case None => null }),
+                                  ("iavail",contact.iavail match { case Some(value) => value ; case None => null }),
+                                  ("icitizen",contact.icitizen match { case Some(value) => value ; case None => null }),
+                                  ("iclass",contact.iclass match { case Some(value) => value ; case None => null }),
+                                  ("idisabl1",contact.idisabl1 match { case Some(value) => value ; case None => null }),
+                                  ("idisabl2",contact.idisabl2 match { case Some(value) => value ; case None => null }),
+                                  ("ienglish",contact.ienglish match { case Some(value) => value ; case None => null }),
+                                  ("ifeb55",contact.ifeb55 match { case Some(value) => value ; case None => null }),
+                                  ("ifertil",contact.ifertil match { case Some(value) => value ; case None => null }),
+                                  ("iimmigr",contact.iimmigr match { case Some(value) => value ; case None => null }),
+                                  ("ikorean",contact.ikorean match { case Some(value) => value ; case None => null }),
+                                  ("ilang1",contact.ilang1 match { case Some(value) => value ; case None => null }),
+                                  ("ilooking",contact.ilooking match { case Some(value) => value ; case None => null }),
+                                  ("imarital",contact.imarital match { case Some(value) => value ; case None => null }),
+                                  ("imay75880",contact.imay75880 match { case Some(value) => value ; case None => null }),
+                                  ("imeans",contact.imeans match { case Some(value) => value ; case None => null }),
+                                  ("imilitary",contact.imilitary match { case Some(value) => value ; case None => null }),
+                                  ("imobility",contact.imobility match { case Some(value) => value ; case None => null }),
+                                  ("imobillim",contact.imobillim match { case Some(value) => value ; case None => null }),
+                                  ("iothrserv",contact.iothrserv match { case Some(value) => value ; case None => null }),
+                                  ("iperscare",contact.iperscare match { case Some(value) => value ; case None => null }),
+                                  ("iragechld",contact.iragechld match { case Some(value) => value ; case None => null }),
+                                  ("irelat1",contact.irelat1 match { case Some(value) => value ; case None => null }),
+                                  ("irelat2",contact.irelat2 match { case Some(value) => value ; case None => null }),
+                                  ("iremplpar",contact.iremplpar match { case Some(value) => value ; case None => null }),
+                                  ("iriders",contact.iriders match { case Some(value) => value ; case None => null }),
+                                  ("irlabor",contact.irlabor match { case Some(value) => value ; case None => null }),
+                                  ("irownchld",contact.irownchld match { case Some(value) => value ; case None => null }),
+                                  ("irpob",contact.irpob match { case Some(value) => value ; case None => null }),
+                                  ("irrelchld",contact.irrelchld match { case Some(value) => value ; case None => null }),
+                                  ("irspouse",contact.irspouse match { case Some(value) => value ; case None => null }),
+                                  ("irvetserv",contact.irvetserv match { case Some(value) => value ; case None => null }),
+                                  ("ischool",contact.ischool match { case Some(value) => value ; case None => null }),
+                                  ("isept80",contact.isept80 match { case Some(value) => value ; case None => null }),
+                                  ("isex",contact.isex match { case Some(value) => value ; case None => null }),
+                                  ("isubfam1",contact.isubfam1 match { case Some(value) => value ; case None => null }),
+                                  ("isubfam2",contact.isubfam2 match { case Some(value) => value ; case None => null }),
+                                  ("itmpabsnt",contact.itmpabsnt match { case Some(value) => value ; case None => null }),
+                                  ("ivietnam",contact.ivietnam match { case Some(value) => value ; case None => null }),
+                                  ("iwork89",contact.iwork89 match { case Some(value) => value ; case None => null }),
+                                  ("iworklwk",contact.iworklwk match { case Some(value) => value ; case None => null }),
+                                  ("iwwii",contact.iwwii match { case Some(value) => value ; case None => null }),
+                                  ("iyearsch",contact.iyearsch match { case Some(value) => value ; case None => null }),
+                                  ("iyearwrk",contact.iyearwrk match { case Some(value) => value ; case None => null })
+                                )
                               } 
                       )
                    
+     println(attribMap.take(10).mkString(","))
+     /*
      val maxstr = maxVector.mkString(",")               
      val minstr = minVector.mkString(",")      
      println(">>>>>First instance")
@@ -60,154 +122,82 @@ class ElectionDatasetReader(private val datasetRDD : CassandraRDD[CassandraRow])
      println(">>>>>>>MAXSTR")
      println(maxstr)
      println(">>>>>>>MINSTR")
-     println(minstr)
-     instanceDataset
-
+     println(minstr)*/
+    contactDataset.map(contact => contact.getInstanceObj)
   }
   
-  def convertToInstance(row : CassandraRow) : Instance = {
-    
-    val label = row.getString("caseid")
-    val attribVector : Array[DoubleDimension] = Array.fill(vectorSize - 1)(DoubleDimension())
-    
-    val dage = row.getLongOption("dage") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dage
-    val dancstry1 = row.getLongOption("dancstry1") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dancstry1
-    val dancstry2 = row.getLongOption("dancstry2") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dancstry2
-    val ddepart = row.getLongOption("ddepart") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ ddepart
-    val dhispanic = row.getLongOption("dhispanic") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dhispanic
-    val dhour89 = row.getLongOption("dhour89") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dhour89
-    val dhours = row.getLongOption("dhours") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dhours
-    val dincome1 = row.getLongOption("dincome1") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dincome1
-    val dincome2 = row.getLongOption("dincome2") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dincome2
-    val dincome3 = row.getLongOption("dincome3") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dincome3
-    val dincome4 = row.getLongOption("dincome4") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dincome4
-    val dincome5 = row.getLongOption("dincome5") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dincome5
-    val dincome6 = row.getLongOption("dincome6") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dincome6
-    val dincome7 = row.getLongOption("dincome7") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dincome7
-    val dincome8 = row.getLongOption("dincome8") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dincome8
-    val dindustry = row.getLongOption("dindustry") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dindustry
-    val doccup = row.getLongOption("doccup") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ doccup
-    val dpob = row.getLongOption("dpob") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dpob
-    val dpoverty = row.getLongOption("dpoverty") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dpoverty
-    val dpwgt1 = row.getLongOption("dpwgt1") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dpwgt1
-    val drearning = row.getLongOption("drearning") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ drearning
-    val drpincome = row.getLongOption("drpincome") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ drpincome
-    val dtravtime = row.getLongOption("dtravtime") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dtravtime
-    val dweek89 = row.getLongOption("dweek89") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dweek89
-    val dyrsserv = row.getLongOption("dyrsserv") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ dyrsserv
-    val iavail = row.getLongOption("iavail") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iavail
-    val icitizen = row.getLongOption("icitizen") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ icitizen
-    val iclass = row.getLongOption("iclass") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iclass
-    val idisabl1 = row.getLongOption("idisabl1") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ idisabl1
-    val idisabl2 = row.getLongOption("idisabl2") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ idisabl2
-    val ienglish = row.getLongOption("ienglish") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ ienglish
-    val ifeb55 = row.getLongOption("ifeb55") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ ifeb55
-    val ifertil = row.getLongOption("ifertil") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ ifertil
-    val iimmigr = row.getLongOption("iimmigr") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iimmigr
-    val ikorean = row.getLongOption("ikorean") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ ikorean
-    val ilang1 = row.getLongOption("ilang1") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ ilang1
-    val ilooking = row.getLongOption("ilooking") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ ilooking
-    val imarital = row.getLongOption("imarital") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ imarital
-    val imay75880 = row.getLongOption("imay75880") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ imay75880
-    val imeans = row.getLongOption("imeans") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ imeans
-    val imilitary = row.getLongOption("imilitary") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ imilitary
-    val imobility = row.getLongOption("imobility") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ imobility
-    val imobillim = row.getLongOption("imobillim") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ imobillim
-    val iothrserv = row.getLongOption("iothrserv") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iothrserv
-    val iperscare = row.getLongOption("iperscare") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iperscare
-    val iragechld = row.getLongOption("iragechld") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iragechld
-    val irelat1 = row.getLongOption("irelat1") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ irelat1
-    val irelat2 = row.getLongOption("irelat2") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ irelat2
-    val iremplpar = row.getLongOption("iremplpar") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iremplpar
-    val iriders = row.getLongOption("iriders") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iriders
-    val irlabor = row.getLongOption("irlabor") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ irlabor
-    val irownchld = row.getLongOption("irownchld") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ irownchld
-    val irpob = row.getLongOption("irpob") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ irpob
-    val irrelchld = row.getLongOption("irrelchld") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ irrelchld
-    val irspouse = row.getLongOption("irspouse") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ irspouse
-    val irvetserv = row.getLongOption("irvetserv") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ irvetserv
-    val ischool = row.getLongOption("ischool") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ ischool
-    val isept80 = row.getLongOption("isept80") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ isept80
-    val isex = row.getLongOption("isex") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ isex
-    val isubfam1 = row.getLongOption("isubfam1") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ isubfam1
-    val isubfam2 = row.getLongOption("isubfam2") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ isubfam2
-    val itmpabsnt = row.getLongOption("itmpabsnt") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ itmpabsnt
-    val ivietnam = row.getLongOption("ivietnam") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ ivietnam
-    val iwork89 = row.getLongOption("iwork89") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iwork89
-    val iworklwk = row.getLongOption("iworklwk") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iworklwk
-    val iwwii = row.getLongOption("iwwii") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iwwii
-    val iyearsch = row.getLongOption("iyearsch") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iyearsch
-    val iyearwrk = row.getLongOption("iyearwrk") match { case Some(value) => DoubleDimension(value) ; case None => null}
-    attribVector :+ iyearwrk
-    
-    Instance(label, attribVector)
+  def convertToContact(row : CassandraRow) : Contact= {
+    new Contact(
+      caseid = row.getString("caseid"),
+      dage = row.getLongOption("dage") ,
+      dancstry1 = row.getLongOption("dancstry1") ,
+      dancstry2 = row.getLongOption("dancstry2") ,
+      ddepart = row.getLongOption("ddepart") ,
+      dhispanic = row.getLongOption("dhispanic") ,
+      dhour89 = row.getLongOption("dhour89") ,
+      dhours = row.getLongOption("dhours") ,
+      dincome1 = row.getLongOption("dincome1") ,
+      dincome2 = row.getLongOption("dincome2") ,
+      dincome3 = row.getLongOption("dincome3") ,
+      dincome4 = row.getLongOption("dincome4") ,
+      dincome5 = row.getLongOption("dincome5") ,
+      dincome6 = row.getLongOption("dincome6") ,
+      dincome7 = row.getLongOption("dincome7") ,
+      dincome8 = row.getLongOption("dincome8") ,
+      dindustry = row.getLongOption("dindustry") ,
+      doccup = row.getLongOption("doccup") ,
+      dpob = row.getLongOption("dpob") ,
+      dpoverty = row.getLongOption("dpoverty") ,
+      dpwgt1 = row.getLongOption("dpwgt1") ,
+      drearning = row.getLongOption("drearning") ,
+      drpincome = row.getLongOption("drpincome") ,
+      dtravtime = row.getLongOption("dtravtime") ,
+      dweek89 = row.getLongOption("dweek89") ,
+      dyrsserv = row.getLongOption("dyrsserv") ,
+      iavail = row.getLongOption("iavail") ,
+      icitizen = row.getLongOption("icitizen") ,
+      iclass = row.getLongOption("iclass") ,
+      idisabl1 = row.getLongOption("idisabl1") ,
+      idisabl2 = row.getLongOption("idisabl2") ,
+      ienglish = row.getLongOption("ienglish") ,
+      ifeb55 = row.getLongOption("ifeb55") ,
+      ifertil = row.getLongOption("ifertil") ,
+      iimmigr = row.getLongOption("iimmigr") ,
+      ikorean = row.getLongOption("ikorean") ,
+      ilang1 = row.getLongOption("ilang1") ,
+      ilooking = row.getLongOption("ilooking") ,
+      imarital = row.getLongOption("imarital") ,
+      imay75880 = row.getLongOption("imay75880") ,
+      imeans = row.getLongOption("imeans") ,
+      imilitary = row.getLongOption("imilitary") ,
+      imobility = row.getLongOption("imobility") ,
+      imobillim = row.getLongOption("imobillim") ,
+      iothrserv = row.getLongOption("iothrserv") ,
+      iperscare = row.getLongOption("iperscare") ,
+      iragechld = row.getLongOption("iragechld") ,
+      irelat1 = row.getLongOption("irelat1") ,
+      irelat2 = row.getLongOption("irelat2") ,
+      iremplpar = row.getLongOption("iremplpar") ,
+      iriders = row.getLongOption("iriders") ,
+      irlabor = row.getLongOption("irlabor") ,
+      irownchld = row.getLongOption("irownchld") ,
+      irpob = row.getLongOption("irpob") ,
+      irrelchld = row.getLongOption("irrelchld") ,
+      irspouse = row.getLongOption("irspouse") ,
+      irvetserv = row.getLongOption("irvetserv") ,
+      ischool = row.getLongOption("ischool") ,
+      isept80 = row.getLongOption("isept80") ,
+      isex = row.getLongOption("isex") ,
+      isubfam1 = row.getLongOption("isubfam1") ,
+      isubfam2 = row.getLongOption("isubfam2") ,
+      itmpabsnt = row.getLongOption("itmpabsnt") ,
+      ivietnam = row.getLongOption("ivietnam") ,
+      iwork89 = row.getLongOption("iwork89") ,
+      iworklwk = row.getLongOption("iworklwk") ,
+      iwwii = row.getLongOption("iwwii") ,
+      iyearsch = row.getLongOption("iyearsch") ,
+      iyearwrk = row.getLongOption("iyearwrk") 
+    )
   }
 }
 
