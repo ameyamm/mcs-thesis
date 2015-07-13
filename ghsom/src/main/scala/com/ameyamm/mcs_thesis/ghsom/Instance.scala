@@ -12,6 +12,10 @@ class Instance( private val _label : String, private val _attributeVector : Arra
   
   def attributeVector = _attributeVector
   
+  override def toString() : String = {
+    return _label + "::>" + attributeVector.mkString(":")
+  }
+  
 }
 
 object Instance extends Serializable {

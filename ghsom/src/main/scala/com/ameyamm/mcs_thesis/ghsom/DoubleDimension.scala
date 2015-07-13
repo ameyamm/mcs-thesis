@@ -31,6 +31,18 @@ class DoubleDimension(_value : Double) extends Dimension[Double](_value) {
       case _ => throw new IllegalClassException("Illegal class in DoubleDimension")
     }
   }
+  
+  def -( that : DoubleDimension ) = {
+    DoubleDimension(this.value - that.value)
+  }
+  
+  def /( that : DoubleDimension ) = {
+    DoubleDimension(this.value / that.value) 
+  }
+  
+  override def toString : String = {
+    this.value.toString
+  }
 }
 
 object DoubleDimension {
@@ -49,4 +61,15 @@ object DoubleDimension {
   def getRandomDimensionValue() : DoubleDimension = {
     new DoubleDimension(Random.nextDouble())
   }
+  
+  def getMax( a : DoubleDimension, b : DoubleDimension ) : DoubleDimension = {
+    if (a > b) a 
+    else b 
+    }
+  
+  def getMin( a : DoubleDimension, b : DoubleDimension) : DoubleDimension = {
+    if (a < b) a 
+    else b 
+    }
+
 }
