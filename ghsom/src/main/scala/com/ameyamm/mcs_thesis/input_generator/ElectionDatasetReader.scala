@@ -18,6 +18,7 @@ import com.ameyamm.mcs_thesis.ghsom.Instance
 import com.ameyamm.mcs_thesis.ghsom.DimensionType
 import com.ameyamm.mcs_thesis.ghsom.DoubleDimension
 import com.ameyamm.mcs_thesis.model.Contact
+import com.ameyamm.mcs_thesis.ghsom.GHSom
 
 class ElectionDatasetReader(private val datasetRDD : CassandraRDD[CassandraRow]) extends DatasetReader {
 
@@ -26,6 +27,8 @@ class ElectionDatasetReader(private val datasetRDD : CassandraRDD[CassandraRow])
 	private val _vectorSize = datasetRDD.first.size 
 	private val datasetOfInstanceObjs = instanizeDataset(datasetRDD)
 
+  def getDataset : RDD[Instance] = datasetOfInstanceObjs
+  
 	def printDataset() {
 		// println(datasetRDD.count)
 		println(datasetOfInstanceObjs.first)
@@ -118,348 +121,279 @@ class ElectionDatasetReader(private val datasetRDD : CassandraRDD[CassandraRow])
 			contactDataset.map ( 
 									contact => new Contact(
 											caseid = contact.caseid,
-											dage = 
-											contact.dage match { 
-											case Some(value) => Some((value - maxVector("dage"))/(maxVector("dage") - minVector("dage"))); 
+											dage = contact.dage match { 
+											case Some(value) => Some((value - minVector("dage"))/(maxVector("dage") - minVector("dage"))); 
 											case None => None 
 											},
-											dancstry1 = 
-											contact.dancstry1 match { 
-											case Some(value) => Some((value - maxVector("dancstry1"))/(maxVector("dancstry1") - minVector("dancstry1"))); 
+											dancstry1 = contact.dancstry1 match { 
+											case Some(value) => Some((value - minVector("dancstry1"))/(maxVector("dancstry1") - minVector("dancstry1"))); 
 											case None => None 
 											},
-											dancstry2 = 
-											contact.dancstry2 match { 
-											case Some(value) => Some((value - maxVector("dancstry2"))/(maxVector("dancstry2") - minVector("dancstry2"))); 
+											dancstry2 = contact.dancstry2 match { 
+											case Some(value) => Some((value - minVector("dancstry2"))/(maxVector("dancstry2") - minVector("dancstry2"))); 
 											case None => None 
 											},
-											ddepart = 
-											contact.ddepart match { 
-											case Some(value) => Some((value - maxVector("ddepart"))/(maxVector("ddepart") - minVector("ddepart"))); 
+											ddepart = contact.ddepart match { 
+											case Some(value) => Some((value - minVector("ddepart"))/(maxVector("ddepart") - minVector("ddepart"))); 
 											case None => None 
 											},
-											dhispanic = 
-											contact.dhispanic match { 
-											case Some(value) => Some((value - maxVector("dhispanic"))/(maxVector("dhispanic") - minVector("dhispanic"))); 
+											dhispanic = contact.dhispanic match { 
+											case Some(value) => Some((value - minVector("dhispanic"))/(maxVector("dhispanic") - minVector("dhispanic"))); 
 											case None => None 
 											},
-											dhour89 = 
-											contact.dhour89 match { 
-											case Some(value) => Some((value - maxVector("dhour89"))/(maxVector("dhour89") - minVector("dhour89"))); 
+											dhour89 = contact.dhour89 match { 
+											case Some(value) => Some((value - minVector("dhour89"))/(maxVector("dhour89") - minVector("dhour89"))); 
 											case None => None 
 											},
-											dhours = 
-											contact.dhours match { 
-											case Some(value) => Some((value - maxVector("dhours"))/(maxVector("dhours") - minVector("dhours"))); 
+											dhours = contact.dhours match { 
+											case Some(value) => Some((value - minVector("dhours"))/(maxVector("dhours") - minVector("dhours"))); 
 											case None => None 
 											},
-											dincome1 = 
-											contact.dincome1 match { 
-											case Some(value) => Some((value - maxVector("dincome1"))/(maxVector("dincome1") - minVector("dincome1"))); 
+											dincome1 = contact.dincome1 match { 
+											case Some(value) => Some((value - minVector("dincome1"))/(maxVector("dincome1") - minVector("dincome1"))); 
 											case None => None 
 											},
-											dincome2 = 
-											contact.dincome2 match { 
-											case Some(value) => Some((value - maxVector("dincome2"))/(maxVector("dincome2") - minVector("dincome2"))); 
+											dincome2 = contact.dincome2 match { 
+											case Some(value) => Some((value - minVector("dincome2"))/(maxVector("dincome2") - minVector("dincome2"))); 
 											case None => None 
 											},
-											dincome3 = 
-											contact.dincome3 match { 
-											case Some(value) => Some((value - maxVector("dincome3"))/(maxVector("dincome3") - minVector("dincome3"))); 
+											dincome3 = contact.dincome3 match { 
+											case Some(value) => Some((value - minVector("dincome3"))/(maxVector("dincome3") - minVector("dincome3"))); 
 											case None => None 
 											},
-											dincome4 = 
-											contact.dincome4 match { 
-											case Some(value) => Some((value - maxVector("dincome4"))/(maxVector("dincome4") - minVector("dincome4"))); 
+											dincome4 = contact.dincome4 match { 
+											case Some(value) => Some((value - minVector("dincome4"))/(maxVector("dincome4") - minVector("dincome4"))); 
 											case None => None 
 											},
-											dincome5 = 
-											contact.dincome5 match { 
-											case Some(value) => Some((value - maxVector("dincome5"))/(maxVector("dincome5") - minVector("dincome5"))); 
+											dincome5 = contact.dincome5 match { 
+											case Some(value) => Some((value - minVector("dincome5"))/(maxVector("dincome5") - minVector("dincome5"))); 
 											case None => None 
 											},
-											dincome6 = 
-											contact.dincome6 match { 
-											case Some(value) => Some((value - maxVector("dincome6"))/(maxVector("dincome6") - minVector("dincome6"))); 
+											dincome6 = contact.dincome6 match { 
+											case Some(value) => Some((value - minVector("dincome6"))/(maxVector("dincome6") - minVector("dincome6"))); 
 											case None => None 
 											},
-											dincome7 = 
-											contact.dincome7 match { 
-											case Some(value) => Some((value - maxVector("dincome7"))/(maxVector("dincome7") - minVector("dincome7"))); 
+											dincome7 = contact.dincome7 match { 
+											case Some(value) => Some((value - minVector("dincome7"))/(maxVector("dincome7") - minVector("dincome7"))); 
 											case None => None 
 											},
-											dincome8 = 
-											contact.dincome8 match { 
-											case Some(value) => Some((value - maxVector("dincome8"))/(maxVector("dincome8") - minVector("dincome8"))); 
+											dincome8 = contact.dincome8 match { 
+											case Some(value) => Some((value - minVector("dincome8"))/(maxVector("dincome8") - minVector("dincome8"))); 
 											case None => None 
 											},
-											dindustry = 
-											contact.dindustry match { 
-											case Some(value) => Some((value - maxVector("dindustry"))/(maxVector("dindustry") - minVector("dindustry"))); 
+											dindustry = contact.dindustry match { 
+											case Some(value) => Some((value - minVector("dindustry"))/(maxVector("dindustry") - minVector("dindustry"))); 
 											case None => None 
 											},
-											doccup = 
-											contact.doccup match { 
-											case Some(value) => Some((value - maxVector("doccup"))/(maxVector("doccup") - minVector("doccup"))); 
+											doccup = contact.doccup match { 
+											case Some(value) => Some((value - minVector("doccup"))/(maxVector("doccup") - minVector("doccup"))); 
 											case None => None 
 											},
-											dpob = 
-											contact.dpob match { 
-											case Some(value) => Some((value - maxVector("dpob"))/(maxVector("dpob") - minVector("dpob"))); 
+											dpob = contact.dpob match { 
+											case Some(value) => Some((value - minVector("dpob"))/(maxVector("dpob") - minVector("dpob"))); 
 											case None => None 
 											},
-											dpoverty = 
-											contact.dpoverty match { 
-											case Some(value) => Some((value - maxVector("dpoverty"))/(maxVector("dpoverty") - minVector("dpoverty"))); 
+											dpoverty = contact.dpoverty match { 
+											case Some(value) => Some((value - minVector("dpoverty"))/(maxVector("dpoverty") - minVector("dpoverty"))); 
 											case None => None 
 											},
-											dpwgt1 = 
-											contact.dpwgt1 match { 
-											case Some(value) => Some((value - maxVector("dpwgt1"))/(maxVector("dpwgt1") - minVector("dpwgt1"))); 
+											dpwgt1 = contact.dpwgt1 match { 
+											case Some(value) => Some((value - minVector("dpwgt1"))/(maxVector("dpwgt1") - minVector("dpwgt1"))); 
 											case None => None 
 											},
-											drearning = 
-											contact.drearning match { 
-											case Some(value) => Some((value - maxVector("drearning"))/(maxVector("drearning") - minVector("drearning"))); 
+											drearning = contact.drearning match { 
+											case Some(value) => Some((value - minVector("drearning"))/(maxVector("drearning") - minVector("drearning"))); 
 											case None => None 
 											},
-											drpincome = 
-											contact.drpincome match { 
-											case Some(value) => Some((value - maxVector("drpincome"))/(maxVector("drpincome") - minVector("drpincome"))); 
+											drpincome = contact.drpincome match { 
+											case Some(value) => Some((value - minVector("drpincome"))/(maxVector("drpincome") - minVector("drpincome"))); 
 											case None => None 
 											},
-											dtravtime = 
-											contact.dtravtime match { 
-											case Some(value) => Some((value - maxVector("dtravtime"))/(maxVector("dtravtime") - minVector("dtravtime"))); 
+											dtravtime = contact.dtravtime match { 
+											case Some(value) => Some((value - minVector("dtravtime"))/(maxVector("dtravtime") - minVector("dtravtime"))); 
 											case None => None 
 											},
-											dweek89 = 
-											contact.dweek89 match { 
-											case Some(value) => Some((value - maxVector("dweek89"))/(maxVector("dweek89") - minVector("dweek89"))); 
+											dweek89 = contact.dweek89 match { 
+											case Some(value) => Some((value - minVector("dweek89"))/(maxVector("dweek89") - minVector("dweek89"))); 
 											case None => None 
 											},
-											dyrsserv = 
-											contact.dyrsserv match { 
-											case Some(value) => Some((value - maxVector("dyrsserv"))/(maxVector("dyrsserv") - minVector("dyrsserv"))); 
+											dyrsserv = contact.dyrsserv match { 
+											case Some(value) => Some((value - minVector("dyrsserv"))/(maxVector("dyrsserv") - minVector("dyrsserv"))); 
 											case None => None 
 											},
-											iavail = 
-											contact.iavail match { 
-											case Some(value) => Some((value - maxVector("iavail"))/(maxVector("iavail") - minVector("iavail"))); 
+											iavail = contact.iavail match { 
+											case Some(value) => Some((value - minVector("iavail"))/(maxVector("iavail") - minVector("iavail"))); 
 											case None => None 
 											},
-											icitizen = 
-											contact.icitizen match { 
-											case Some(value) => Some((value - maxVector("icitizen"))/(maxVector("icitizen") - minVector("icitizen"))); 
+											icitizen = contact.icitizen match { 
+											case Some(value) => Some((value - minVector("icitizen"))/(maxVector("icitizen") - minVector("icitizen"))); 
 											case None => None 
 											},
-											iclass = 
-											contact.iclass match { 
-											case Some(value) => Some((value - maxVector("iclass"))/(maxVector("iclass") - minVector("iclass"))); 
+											iclass = contact.iclass match { 
+											case Some(value) => Some((value - minVector("iclass"))/(maxVector("iclass") - minVector("iclass"))); 
 											case None => None 
 											},
-											idisabl1 = 
-											contact.idisabl1 match { 
-											case Some(value) => Some((value - maxVector("idisabl1"))/(maxVector("idisabl1") - minVector("idisabl1"))); 
+											idisabl1 = contact.idisabl1 match { 
+											case Some(value) => Some((value - minVector("idisabl1"))/(maxVector("idisabl1") - minVector("idisabl1"))); 
 											case None => None 
 											},
-											idisabl2 = 
-											contact.idisabl2 match { 
-											case Some(value) => Some((value - maxVector("idisabl2"))/(maxVector("idisabl2") - minVector("idisabl2"))); 
+											idisabl2 = contact.idisabl2 match { 
+											case Some(value) => Some((value - minVector("idisabl2"))/(maxVector("idisabl2") - minVector("idisabl2"))); 
 											case None => None 
 											},
-											ienglish = 
-											contact.ienglish match { 
-											case Some(value) => Some((value - maxVector("ienglish"))/(maxVector("ienglish") - minVector("ienglish"))); 
+											ienglish = contact.ienglish match { 
+											case Some(value) => Some((value - minVector("ienglish"))/(maxVector("ienglish") - minVector("ienglish"))); 
 											case None => None 
 											},
-											ifeb55 = 
-											contact.ifeb55 match { 
-											case Some(value) => Some((value - maxVector("ifeb55"))/(maxVector("ifeb55") - minVector("ifeb55"))); 
+											ifeb55 = contact.ifeb55 match { 
+											case Some(value) => Some((value - minVector("ifeb55"))/(maxVector("ifeb55") - minVector("ifeb55"))); 
 											case None => None 
 											},
-											ifertil = 
-											contact.ifertil match { 
-											case Some(value) => Some((value - maxVector("ifertil"))/(maxVector("ifertil") - minVector("ifertil"))); 
+											ifertil = contact.ifertil match { 
+											case Some(value) => Some((value - minVector("ifertil"))/(maxVector("ifertil") - minVector("ifertil"))); 
 											case None => None 
 											},
-											iimmigr = 
-											contact.iimmigr match { 
-											case Some(value) => Some((value - maxVector("iimmigr"))/(maxVector("iimmigr") - minVector("iimmigr"))); 
+											iimmigr = contact.iimmigr match { 
+											case Some(value) => Some((value - minVector("iimmigr"))/(maxVector("iimmigr") - minVector("iimmigr"))); 
 											case None => None 
 											},
-											ikorean = 
-											contact.ikorean match { 
-											case Some(value) => Some((value - maxVector("ikorean"))/(maxVector("ikorean") - minVector("ikorean"))); 
+											ikorean = contact.ikorean match { 
+											case Some(value) => Some((value - minVector("ikorean"))/(maxVector("ikorean") - minVector("ikorean"))); 
 											case None => None 
 											},
-											ilang1 = 
-											contact.ilang1 match { 
-											case Some(value) => Some((value - maxVector("ilang1"))/(maxVector("ilang1") - minVector("ilang1"))); 
+											ilang1 = contact.ilang1 match { 
+											case Some(value) => Some((value - minVector("ilang1"))/(maxVector("ilang1") - minVector("ilang1"))); 
 											case None => None 
 											},
-											ilooking = 
-											contact.ilooking match { 
-											case Some(value) => Some((value - maxVector("ilooking"))/(maxVector("ilooking") - minVector("ilooking"))); 
+											ilooking = contact.ilooking match { 
+											case Some(value) => Some((value - minVector("ilooking"))/(maxVector("ilooking") - minVector("ilooking"))); 
 											case None => None 
 											},
-											imarital = 
-											contact.imarital match { 
-											case Some(value) => Some((value - maxVector("imarital"))/(maxVector("imarital") - minVector("imarital"))); 
+											imarital = contact.imarital match { 
+											case Some(value) => Some((value - minVector("imarital"))/(maxVector("imarital") - minVector("imarital"))); 
 											case None => None 
 											},
-											imay75880 = 
-											contact.imay75880 match { 
-											case Some(value) => Some((value - maxVector("imay75880"))/(maxVector("imay75880") - minVector("imay75880"))); 
+											imay75880 = contact.imay75880 match { 
+											case Some(value) => Some((value - minVector("imay75880"))/(maxVector("imay75880") - minVector("imay75880"))); 
 											case None => None 
 											},
-											imeans = 
-											contact.imeans match { 
-											case Some(value) => Some((value - maxVector("imeans"))/(maxVector("imeans") - minVector("imeans"))); 
+											imeans = contact.imeans match { 
+											case Some(value) => Some((value - minVector("imeans"))/(maxVector("imeans") - minVector("imeans"))); 
 											case None => None 
 											},
-											imilitary = 
-											contact.imilitary match { 
-											case Some(value) => Some((value - maxVector("imilitary"))/(maxVector("imilitary") - minVector("imilitary"))); 
+											imilitary = contact.imilitary match { 
+											case Some(value) => Some((value - minVector("imilitary"))/(maxVector("imilitary") - minVector("imilitary"))); 
 											case None => None 
 											},
-											imobility = 
-											contact.imobility match { 
-											case Some(value) => Some((value - maxVector("imobility"))/(maxVector("imobility") - minVector("imobility"))); 
+											imobility = contact.imobility match { 
+											case Some(value) => Some((value - minVector("imobility"))/(maxVector("imobility") - minVector("imobility"))); 
 											case None => None 
 											},
-											imobillim = 
-											contact.imobillim match { 
-											case Some(value) => Some((value - maxVector("imobillim"))/(maxVector("imobillim") - minVector("imobillim"))); 
+											imobillim = contact.imobillim match { 
+											case Some(value) => Some((value - minVector("imobillim"))/(maxVector("imobillim") - minVector("imobillim"))); 
 											case None => None 
 											},
-											iothrserv = 
-											contact.iothrserv match { 
-											case Some(value) => Some((value - maxVector("iothrserv"))/(maxVector("iothrserv") - minVector("iothrserv"))); 
+											iothrserv = contact.iothrserv match { 
+											case Some(value) => Some((value - minVector("iothrserv"))/(maxVector("iothrserv") - minVector("iothrserv"))); 
 											case None => None 
 											},
-											iperscare = 
-											contact.iperscare match { 
-											case Some(value) => Some((value - maxVector("iperscare"))/(maxVector("iperscare") - minVector("iperscare"))); 
+											iperscare = contact.iperscare match { 
+											case Some(value) => Some((value - minVector("iperscare"))/(maxVector("iperscare") - minVector("iperscare"))); 
 											case None => None 
 											},
-											iragechld = 
-											contact.iragechld match { 
-											case Some(value) => Some((value - maxVector("iragechld"))/(maxVector("iragechld") - minVector("iragechld"))); 
+											iragechld = contact.iragechld match { 
+											case Some(value) => Some((value - minVector("iragechld"))/(maxVector("iragechld") - minVector("iragechld"))); 
 											case None => None 
 											},
-											irelat1 = 
-											contact.irelat1 match { 
-											case Some(value) => Some((value - maxVector("irelat1"))/(maxVector("irelat1") - minVector("irelat1"))); 
+											irelat1 = contact.irelat1 match { 
+											case Some(value) => Some((value - minVector("irelat1"))/(maxVector("irelat1") - minVector("irelat1"))); 
 											case None => None 
 											},
-											irelat2 = 
-											contact.irelat2 match { 
-											case Some(value) => Some((value - maxVector("irelat2"))/(maxVector("irelat2") - minVector("irelat2"))); 
+											irelat2 = contact.irelat2 match { 
+											case Some(value) => Some((value - minVector("irelat2"))/(maxVector("irelat2") - minVector("irelat2"))); 
 											case None => None 
 											},
-											iremplpar = 
-											contact.iremplpar match { 
-											case Some(value) => Some((value - maxVector("iremplpar"))/(maxVector("iremplpar") - minVector("iremplpar"))); 
+											iremplpar = contact.iremplpar match { 
+											case Some(value) => Some((value - minVector("iremplpar"))/(maxVector("iremplpar") - minVector("iremplpar"))); 
 											case None => None 
 											},
-											iriders = 
-											contact.iriders match { 
-											case Some(value) => Some((value - maxVector("iriders"))/(maxVector("iriders") - minVector("iriders"))); 
+											iriders = contact.iriders match { 
+											case Some(value) => Some((value - minVector("iriders"))/(maxVector("iriders") - minVector("iriders"))); 
 											case None => None 
 											},
-											irlabor = 
-											contact.irlabor match { 
-											case Some(value) => Some((value - maxVector("irlabor"))/(maxVector("irlabor") - minVector("irlabor"))); 
+											irlabor = contact.irlabor match { 
+											case Some(value) => Some((value - minVector("irlabor"))/(maxVector("irlabor") - minVector("irlabor"))); 
 											case None => None 
 											},
-											irownchld = 
-											contact.irownchld match { 
-											case Some(value) => Some((value - maxVector("irownchld"))/(maxVector("irownchld") - minVector("irownchld"))); 
+											irownchld = contact.irownchld match { 
+											case Some(value) => Some((value - minVector("irownchld"))/(maxVector("irownchld") - minVector("irownchld"))); 
 											case None => None 
 											},
-											irpob = 
-											contact.irpob match { 
-											case Some(value) => Some((value - maxVector("irpob"))/(maxVector("irpob") - minVector("irpob"))); 
+											irpob = contact.irpob match { 
+											case Some(value) => Some((value - minVector("irpob"))/(maxVector("irpob") - minVector("irpob"))); 
 											case None => None 
 											},
-											irrelchld = 
-											contact.irrelchld match { 
-											case Some(value) => Some((value - maxVector("irrelchld"))/(maxVector("irrelchld") - minVector("irrelchld"))); 
+											irrelchld = contact.irrelchld match { 
+											case Some(value) => Some((value - minVector("irrelchld"))/(maxVector("irrelchld") - minVector("irrelchld"))); 
 											case None => None 
 											},
-											irspouse = 
-											contact.irspouse match { 
-											case Some(value) => Some((value - maxVector("irspouse"))/(maxVector("irspouse") - minVector("irspouse"))); 
+											irspouse = contact.irspouse match { 
+											case Some(value) => Some((value - minVector("irspouse"))/(maxVector("irspouse") - minVector("irspouse"))); 
 											case None => None 
 											},
-											irvetserv = 
-											contact.irvetserv match { 
-											case Some(value) => Some((value - maxVector("irvetserv"))/(maxVector("irvetserv") - minVector("irvetserv"))); 
+											irvetserv = contact.irvetserv match { 
+											case Some(value) => Some((value - minVector("irvetserv"))/(maxVector("irvetserv") - minVector("irvetserv"))); 
 											case None => None 
 											},
-											ischool = 
-											contact.ischool match { 
-											case Some(value) => Some((value - maxVector("ischool"))/(maxVector("ischool") - minVector("ischool"))); 
+											ischool = contact.ischool match { 
+											case Some(value) => Some((value - minVector("ischool"))/(maxVector("ischool") - minVector("ischool"))); 
 											case None => None 
 											},
-											isept80 = 
-											contact.isept80 match { 
-											case Some(value) => Some((value - maxVector("isept80"))/(maxVector("isept80") - minVector("isept80"))); 
+											isept80 = contact.isept80 match { 
+											case Some(value) => Some((value - minVector("isept80"))/(maxVector("isept80") - minVector("isept80"))); 
 											case None => None 
 											},
-											isex = 
-											contact.isex match { 
-											case Some(value) => Some((value - maxVector("isex"))/(maxVector("isex") - minVector("isex"))); 
+											isex = contact.isex match { 
+											case Some(value) => Some((value - minVector("isex"))/(maxVector("isex") - minVector("isex"))); 
 											case None => None 
 											},
-											isubfam1 = 
-											contact.isubfam1 match { 
-											case Some(value) => Some((value - maxVector("isubfam1"))/(maxVector("isubfam1") - minVector("isubfam1"))); 
+											isubfam1 = contact.isubfam1 match { 
+											case Some(value) => Some((value - minVector("isubfam1"))/(maxVector("isubfam1") - minVector("isubfam1"))); 
 											case None => None 
 											},
-											isubfam2 = 
-											contact.isubfam2 match { 
-											case Some(value) => Some((value - maxVector("isubfam2"))/(maxVector("isubfam2") - minVector("isubfam2"))); 
+											isubfam2 = contact.isubfam2 match { 
+											case Some(value) => Some((value - minVector("isubfam2"))/(maxVector("isubfam2") - minVector("isubfam2"))); 
 											case None => None 
 											},
-											itmpabsnt = 
-											contact.itmpabsnt match { 
-											case Some(value) => Some((value - maxVector("itmpabsnt"))/(maxVector("itmpabsnt") - minVector("itmpabsnt"))); 
+											itmpabsnt = contact.itmpabsnt match { 
+											case Some(value) => Some((value - minVector("itmpabsnt"))/(maxVector("itmpabsnt") - minVector("itmpabsnt"))); 
 											case None => None 
 											},
-											ivietnam = 
-											contact.ivietnam match { 
-											case Some(value) => Some((value - maxVector("ivietnam"))/(maxVector("ivietnam") - minVector("ivietnam"))); 
+											ivietnam = contact.ivietnam match { 
+											case Some(value) => Some((value - minVector("ivietnam"))/(maxVector("ivietnam") - minVector("ivietnam"))); 
 											case None => None 
 											},
-											iwork89 = 
-											contact.iwork89 match { 
-											case Some(value) => Some((value - maxVector("iwork89"))/(maxVector("iwork89") - minVector("iwork89"))); 
+											iwork89 = contact.iwork89 match { 
+											case Some(value) => Some((value - minVector("iwork89"))/(maxVector("iwork89") - minVector("iwork89"))); 
 											case None => None 
 											},
-											iworklwk = 
-											contact.iworklwk match { 
-											case Some(value) => Some((value - maxVector("iworklwk"))/(maxVector("iworklwk") - minVector("iworklwk"))); 
+											iworklwk = contact.iworklwk match { 
+											case Some(value) => Some((value - minVector("iworklwk"))/(maxVector("iworklwk") - minVector("iworklwk"))); 
 											case None => None 
 											},
-											iwwii = 
-											contact.iwwii match { 
-											case Some(value) => Some((value - maxVector("iwwii"))/(maxVector("iwwii") - minVector("iwwii"))); 
+											iwwii = contact.iwwii match { 
+											case Some(value) => Some((value - minVector("iwwii"))/(maxVector("iwwii") - minVector("iwwii"))); 
 											case None => None 
 											},
-											iyearsch = 
-											contact.iyearsch match { 
-											case Some(value) => Some((value - maxVector("iyearsch"))/(maxVector("iyearsch") - minVector("iyearsch"))); 
+											iyearsch = contact.iyearsch match { 
+											case Some(value) => Some((value - minVector("iyearsch"))/(maxVector("iyearsch") - minVector("iyearsch"))); 
 											case None => None 
 											},
-											iyearwrk = 
-											contact.iyearwrk match { 
-											case Some(value) => Some((value - maxVector("iyearwrk"))/(maxVector("iyearwrk") - minVector("iyearwrk"))); 
+											iyearwrk = contact.iyearwrk match { 
+											case Some(value) => Some((value - minVector("iyearwrk"))/(maxVector("iyearwrk") - minVector("iyearwrk"))); 
 											case None => None 
 											}
-                ).getInstanceObj
-			)
+                ).getInstanceObj)
 		}
 
 		def convertToContact(row : CassandraRow) : Contact= {
@@ -831,14 +765,15 @@ object ElectionDatasetReader {
         maxVector(i) = if (attribVector(i) > maxVector(i)) attribVector(i) else maxVector(i)
     } 
     println(maxVector.mkString)
-		 */
+		*/
 		val dataset = sc.cassandraTable("uscensus1990", "dataset") 
-		println("CREATING DATASET >>>>>>")
 		val datasetReader : ElectionDatasetReader = new ElectionDatasetReader(dataset) 
-		println("VECTOR SIZE:>>>>>>>> " )
-		println(datasetReader.vectorSize)
-		println("DATASET PRINT:>>>>>>>> " )
-		println(datasetReader.printDataset())
+    val electionDataset = datasetReader.getDataset
+    
+    val ghsom = GHSom(electionDataset)
+    
+    ghsom.train
+    
 
 	}
 }

@@ -4,8 +4,6 @@ package com.ameyamm.mcs_thesis.ghsom
  * @author ameya
  */
 
-import jdk.nashorn.internal.ir.annotations.Immutable
-
 class Instance( private val _label : String, private val _attributeVector : Array[_ <: DimensionType] ) extends Serializable {
   
   def label = _label 
@@ -14,6 +12,16 @@ class Instance( private val _label : String, private val _attributeVector : Arra
   
   override def toString() : String = {
     return _label + "::>" + attributeVector.mkString(":")
+  }
+  
+  def +(that : Instance) : Instance = {
+    new Instance( this.label + "," + that.label, 
+                  this.attributeVector.zip(that.attributeVector).map( t => t._1 + t._2 )               
+        )
+  }
+  
+  def getDistanceFrom( other : Instance ) : Double = {
+    this.attributeVector.zip(other.attributeVector).map(t => t._1.getDistanceFrom(t._2)).reduce(_ + _)
   }
   
 }

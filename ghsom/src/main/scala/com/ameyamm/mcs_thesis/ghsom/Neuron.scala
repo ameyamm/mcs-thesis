@@ -6,24 +6,35 @@ package com.ameyamm.mcs_thesis.ghsom
 
 import scala.collection.mutable
 import scala.collection.immutable
+import scala.math.{exp,pow}
 
-class Neuron (private val _row : String, private val _column : String, private val _attributeVector : immutable.Vector[DimensionType] = null){
+class Neuron (private val _row : Long, private val _column : Long, private val _neuronInstance : Instance = null){
   private val mappedInputs : mutable.ListBuffer[Instance] = mutable.ListBuffer()
   
-  def row : String = _row 
+  def row : Long = _row 
   
-  def column : String = _column
+  def column : Long = _column
   
-  def attributeVector : Vector[DimensionType] = _attributeVector
+  def neuronInstance : Instance = _neuronInstance
+  
+  def index : String = "[" + row.toString() + "," + column.toString() + "]"
   
   def addToMappedInputs(instance : Instance) {
     mappedInputs += instance
   }
   
+  def computeNeighbourhoodFactor(neuron : Neuron, iteration : Long) : Double = {
+    exp(-(pow(this.row - neuron.row, 2) + pow(this.column - neuron.column , 2)/pow(iteration,2)))    
+  }
+  
+  def getAttributeVectorWithNeighbourhoodFactor(factor : Double) : Array[DimensionType] = {
+    neuronInstance.attributeVector.map { attrib => attrib * factor }  
+  }
+  
   override def toString() : String = {
-    var neuronString = "[" + row + "," + column + "]" + "(" + attributeVector.size + ")" + ":" + "["
+    var neuronString = "[" + row + "," + column + "]" + "(" + neuronInstance.attributeVector.size + ")" + ":" + "["
     
-    _attributeVector.foreach( attrib => neuronString += (attrib.toString() + ",") )
+    neuronInstance.attributeVector.foreach( attrib => neuronString += (attrib.toString() + ",") )
     
     neuronString += "]"
     
@@ -33,7 +44,7 @@ class Neuron (private val _row : String, private val _column : String, private v
 }
 
 object Neuron {
-  def apply(row : String, column: String, attributeVector : immutable.Vector[DimensionType]) : Neuron = {
-    new Neuron(row, column, attributeVector)
+  def apply(row : Long, column: Long, neuronInstance : Instance) : Neuron = {
+    new Neuron(row, column, neuronInstance)
   }
 }

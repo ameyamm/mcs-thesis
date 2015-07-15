@@ -10,4 +10,8 @@ object Utils {
  def generateRandomVector( randomDimensionFunction : () => DimensionType) : Vector[DimensionType] = {
     immutable.Vector.tabulate(Constants.DIMENSION_VECTOR_SIZE)( i => randomDimensionFunction() )
  } 
+ 
+ def generateRandomArray( randomDimensionFunction : () => DimensionType) : Array[DimensionType] = {
+    Array.tabulate(Constants.DIMENSION_VECTOR_SIZE)( i => randomDimensionFunction() )
+ } 
 }

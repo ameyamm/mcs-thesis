@@ -36,12 +36,48 @@ class DoubleDimension(_value : Double) extends Dimension[Double](_value) {
     DoubleDimension(this.value - that.value)
   }
   
+  override def -( that : DimensionType ) = {
+    that match {
+      case d : DoubleDimension =>DoubleDimension(this.value - d.value) 
+      case _ => throw new IllegalClassException("Illegal class in DoubleDimension")
+    }
+  }
+  
+  override def /( that : DimensionType ) = {
+    that match {
+      case d : DoubleDimension =>DoubleDimension(this.value / d.value) 
+      case _ => throw new IllegalClassException("Illegal class in DoubleDimension")
+    }
+  }
+  
   def /( that : DoubleDimension ) = {
     DoubleDimension(this.value / that.value) 
   }
   
+  override def /( num : Long ) : DimensionType = {
+    DoubleDimension(this.value / num)
+  } 
+  
   override def toString : String = {
     this.value.toString
+  }
+  
+  override def + (that : DimensionType) : DimensionType = {
+    that match {
+      case d : DoubleDimension => new DoubleDimension(this.value + d.value)
+      case _ => throw new IllegalClassException("Illegal class in DoubleDimension")
+    }
+  }
+  
+  override def * (multFactor : Double) : DimensionType = {
+    new DoubleDimension(this.value * multFactor)
+  }
+
+  override def getDistanceFrom(that : DimensionType) : Double = {
+    that match {
+      case d : DoubleDimension => (this.value - d.value) * (this.value - d.value)
+      case _ => throw new IllegalClassException("Illegal class in DoubleDimension")
+    }
   }
 }
 
