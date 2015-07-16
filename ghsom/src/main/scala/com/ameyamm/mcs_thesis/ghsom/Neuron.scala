@@ -8,16 +8,22 @@ import scala.collection.mutable
 import scala.collection.immutable
 import scala.math.{exp,pow}
 
-class Neuron (private val _row : Long, private val _column : Long, private val _neuronInstance : Instance = null){
+class Neuron (
+    private val _row : Long, 
+    private val _column : Long, 
+    private var _neuronInstance : Instance = null
+  ) extends Serializable {
   private val mappedInputs : mutable.ListBuffer[Instance] = mutable.ListBuffer()
   
   def row : Long = _row 
   
   def column : Long = _column
   
-  def neuronInstance : Instance = _neuronInstance
+  def neuronInstance : Instance = _neuronInstance 
   
-  def index : String = "[" + row.toString() + "," + column.toString() + "]"
+  def neuronInstance_= (instance : Instance) : Unit = _neuronInstance = instance 
+  
+  def index : String = row.toString() + "," + column.toString() 
   
   def addToMappedInputs(instance : Instance) {
     mappedInputs += instance

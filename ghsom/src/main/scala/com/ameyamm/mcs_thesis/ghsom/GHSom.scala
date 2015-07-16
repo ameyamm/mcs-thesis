@@ -33,8 +33,12 @@ class GHSom(private val _dataset : RDD[Instance]) extends Serializable {
      
      // Create first som layer of 4 x 4
      
-     val somLayer1 = SOMLayer(4,4)
+     val somLayer1 = SOMLayer(4,4,dataset.first.attributeVector.size)
+     println("BEFORE: RANDOM>>>>>")
+     somLayer1.display()
      somLayer1.train(dataset)
+     println("AFTER: TRAINED>>>>>")
+     somLayer1.display()
    }
    
    private def computeMean( a: (Instance, Long), b : (Instance, Long) ) : (Instance,Long) = {

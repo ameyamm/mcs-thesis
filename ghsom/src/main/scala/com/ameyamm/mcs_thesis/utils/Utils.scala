@@ -11,7 +11,7 @@ object Utils {
     immutable.Vector.tabulate(Constants.DIMENSION_VECTOR_SIZE)( i => randomDimensionFunction() )
  } 
  
- def generateRandomArray( randomDimensionFunction : () => DimensionType) : Array[DimensionType] = {
-    Array.tabulate(Constants.DIMENSION_VECTOR_SIZE)( i => randomDimensionFunction() )
+ def generateRandomArray( randomDimensionFunction : () => DimensionType, vectorSize : Int) : Array[DimensionType] = {
+    Array.tabulate(vectorSize)( i => randomDimensionFunction() )
  } 
 }

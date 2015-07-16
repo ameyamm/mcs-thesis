@@ -19,6 +19,7 @@ import com.ameyamm.mcs_thesis.ghsom.DimensionType
 import com.ameyamm.mcs_thesis.ghsom.DoubleDimension
 import com.ameyamm.mcs_thesis.model.Contact
 import com.ameyamm.mcs_thesis.ghsom.GHSom
+import com.ameyamm.mcs_thesis.globals.SparkConfig
 
 class ElectionDatasetReader(private val datasetRDD : CassandraRDD[CassandraRow]) extends DatasetReader {
 
@@ -745,15 +746,16 @@ class ElectionDatasetReader(private val datasetRDD : CassandraRDD[CassandraRow])
 
 object ElectionDatasetReader {
 	def main(args : Array[String]) {
-		val conf = new SparkConf(true)
+		/*val conf = new SparkConf(true)
 		.setAppName("GHSOM Election Dataset")
 		.setMaster("local[4]")
 		.set("spark.cassandra.connection.host", "localhost")
 		.set("spark.cassandra.auth.username","ameya")
 		.set("spark.cassandra.auth.password","amu5886")
 
+    * */
 
-		val sc = new SparkContext(conf)
+		val sc = SparkConfig.getSparkContext
 
 		/*
     val maxVector = Array.fill(10)(DoubleDimension.MinValue)

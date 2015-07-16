@@ -4,7 +4,7 @@ package com.ameyamm.mcs_thesis.ghsom
  * @author ameya
  */
 
-class Instance( private val _label : String, private val _attributeVector : Array[_ <: DimensionType] ) extends Serializable {
+class Instance( private val _label : String, private val _attributeVector : Array[DimensionType] ) extends Serializable {
   
   def label = _label 
   
@@ -27,7 +27,7 @@ class Instance( private val _label : String, private val _attributeVector : Arra
 }
 
 object Instance extends Serializable {
-  def apply(label : String, attributeVector : Array[_ <: DimensionType]) = {
+  def apply(label : String, attributeVector : Array[DimensionType]) = {
     new Instance (label, attributeVector)
   }
 }
