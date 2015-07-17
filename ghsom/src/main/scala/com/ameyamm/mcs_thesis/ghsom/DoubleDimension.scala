@@ -32,6 +32,10 @@ class DoubleDimension(_value : Double) extends Dimension[Double](_value) {
     }
   }
   
+  def !=( that : Double ) : Boolean = {
+    this.value != that
+  }
+  
   def -( that : DoubleDimension ) = {
     DoubleDimension(this.value - that.value)
   }
@@ -55,6 +59,10 @@ class DoubleDimension(_value : Double) extends Dimension[Double](_value) {
   }
   
   override def /( num : Long ) : DimensionType = {
+    DoubleDimension(this.value / num)
+  } 
+
+  override def /( num : Double) : DimensionType = {
     DoubleDimension(this.value / num)
   } 
   

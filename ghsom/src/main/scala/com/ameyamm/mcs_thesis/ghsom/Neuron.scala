@@ -9,24 +9,54 @@ import scala.collection.immutable
 import scala.math.{exp,pow}
 
 class Neuron (
-    private val _row : Long, 
-    private val _column : Long, 
+    private val _row : Int, 
+    private val _column : Int, 
     private var _neuronInstance : Instance = null
   ) extends Serializable {
-  private val mappedInputs : mutable.ListBuffer[Instance] = mutable.ListBuffer()
+  private val _mappedInputs : mutable.ListBuffer[Instance] = mutable.ListBuffer()
   
-  def row : Long = _row 
+  private var _qe : Double = 0
   
-  def column : Long = _column
+  private var _mqe : Double = 0
+  
+  private var _mappedInstanceCount : Long = 0
+  
+  /* Getters and setters */
+  def row : Int = _row 
+  
+  def column : Int = _column
   
   def neuronInstance : Instance = _neuronInstance 
   
   def neuronInstance_= (instance : Instance) : Unit = _neuronInstance = instance 
   
-  def index : String = row.toString() + "," + column.toString() 
+  def id : String = row.toString() + "," + column.toString() 
   
+  def mappedInputs : mutable.ListBuffer[Instance] = _mappedInputs
+  
+  def mqe : Double = _mqe
+  
+  def mqe_= (value : Double) : Unit = _mqe = value
+  
+  def qe : Double = _qe
+  
+  def qe_= (value : Double) : Unit = _qe = value
+  
+  def mappedInstanceCount : Long = _mappedInstanceCount
+
+  def mappedInstanceCount_= (value : Long): Unit = _mappedInstanceCount = value
+  
+  /* Methods */
   def addToMappedInputs(instance : Instance) {
-    mappedInputs += instance
+    _mappedInputs += instance
+  }
+  
+  def addToMappedInputs(instances : mutable.ListBuffer[Instance]) {
+    _mappedInputs ++= instances
+  }
+  
+  def clearMappedInputs() {
+    _mappedInputs.clear()
   }
   
   def computeNeighbourhoodFactor(neuron : Neuron, iteration : Long) : Double = {
@@ -38,7 +68,7 @@ class Neuron (
   }
   
   override def toString() : String = {
-    var neuronString = "[" + row + "," + column + "]" + "(" + neuronInstance.attributeVector.size + ")" + ":" + "["
+    var neuronString = "[" + row + "," + column + "]" + "(" + qe + ":" + mqe + ")" + ":" + "["
     
     neuronInstance.attributeVector.foreach( attrib => neuronString += (attrib.toString() + ",") )
     
@@ -47,10 +77,19 @@ class Neuron (
     neuronString
   }
   
+  override def equals( obj : Any ) : Boolean = {
+    obj match {
+      case o : Neuron => o.id.equals(this.id)
+      case _ => false 
+    }
+  }
+  
+  override def hashCode = id.hashCode()
+  
 }
 
 object Neuron {
-  def apply(row : Long, column: Long, neuronInstance : Instance) : Neuron = {
+  def apply(row : Int, column: Int, neuronInstance : Instance) : Neuron = {
     new Neuron(row, column, neuronInstance)
   }
 }

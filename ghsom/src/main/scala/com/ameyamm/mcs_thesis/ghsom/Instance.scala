@@ -30,4 +30,8 @@ object Instance extends Serializable {
   def apply(label : String, attributeVector : Array[DimensionType]) = {
     new Instance (label, attributeVector)
   }
+  
+  def averageInstance(instance1 : Instance, instance2 : Instance) : Instance = {
+    Instance("avgInstance", instance1.attributeVector.zip(instance2.attributeVector).map(t => (t._1 + t._2) / 2))
+  }
 }
