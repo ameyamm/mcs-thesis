@@ -63,9 +63,7 @@ class Neuron (
     exp(-(pow(this.row - neuron.row, 2) + pow(this.column - neuron.column , 2)/pow(iteration,2)))    
   }
   
-  def getAttributeVectorWithNeighbourhoodFactor(factor : Double) : Array[DimensionType] = {
-    neuronInstance.attributeVector.map { attrib => attrib * factor }  
-  }
+  
   
   override def toString() : String = {
     var neuronString = "[" + row + "," + column + "]" + "(" + qe + ":" + mqe + ")" + ":" + "["
@@ -86,6 +84,12 @@ class Neuron (
   
   override def hashCode = id.hashCode()
   
+}
+
+object NeuronFunctions {
+  def getAttributeVectorWithNeighbourhoodFactor(neuron : Neuron, factor : Double) : Array[DimensionType] = {
+    neuron.neuronInstance.attributeVector.map { attrib => attrib * factor }  
+  }
 }
 
 object Neuron {

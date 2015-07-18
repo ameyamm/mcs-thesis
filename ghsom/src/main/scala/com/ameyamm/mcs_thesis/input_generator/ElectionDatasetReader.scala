@@ -847,9 +847,9 @@ object ElectionDatasetReader {
     datasetReader.printDataset()
     val electionDataset = datasetReader.getDataset
     
-    val ghsom = GHSom(electionDataset)
+    val ghsom = GHSom()
     
-    ghsom.train
+    ghsom.train(electionDataset)
     
 
 	}
