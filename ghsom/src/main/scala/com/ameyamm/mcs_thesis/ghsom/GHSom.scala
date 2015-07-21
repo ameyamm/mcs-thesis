@@ -34,6 +34,7 @@ class GHSom() extends Serializable {
      val mqe0 = dataset.map(instance => meanInstance.getDistanceFrom(instance)).reduce(_ + _) / totalInstances
      //val qe0 = dataset.map(instance => meanInstance.getDistanceFrom(instance)).reduce(_ + _) 
      
+     layer0Neuron.mqe = mqe0
      
      println("<<<<<<<<<<<<<<<<<<<<<<<<<")
      println("SumofInstances-" + sumOfInstances)
@@ -43,27 +44,28 @@ class GHSom() extends Serializable {
      println("mqe0 : " + mqe0)
      println(">>>>>>>>>>>>>>>>>>>>>>>>>")
      
+     // ID of a particular SOMLayer. there can be many layers in the same layer. this is like a PK
      val layer = 0 
-     val layer0NeuronID = "0,0"
-     val layerNeuronRDD = dataset.map(instance => (layer, layer0NeuronID, instance)).persist()
+     //val layer0NeuronID = "0,0"
+     var layerNeuronRDD = dataset.map(instance => (layer, layer0Neuron.id, instance))
      
      // layer and neuron is the pared layer and neuron
-     case class LayerNeuron(layer : Int, neuronID : String) {
+     case class LayerNeuron(parentLayer : Int, parentNeuronID : String, parentNeuronMQE : Double) {
        override def equals( obj : Any ) : Boolean = {
          obj match {
           case o : LayerNeuron => {
-            (this.layer.equals(o.layer) && this.neuronID.equals(o.neuronID)) 
+            (this.parentLayer.equals(o.parentLayer) && this.parentNeuronID.equals(o.parentNeuronID)) 
           }
           case _ => false 
          }
        }
   
-       override def hashCode : Int = layer.hashCode() + neuronID.hashCode()
+       override def hashCode : Int = parentLayer.hashCode() + parentNeuronID.hashCode()
      }
      
      val layerQueue = new mutable.Queue[LayerNeuron]()
      
-     layerQueue.enqueue(LayerNeuron(layer, layer0NeuronID))
+     layerQueue.enqueue(LayerNeuron(layer, layer0Neuron.id, mqe0))
      
      var hierarchicalGrowth = true 
      
@@ -76,21 +78,21 @@ class GHSom() extends Serializable {
        // make dataset for this layer
 
        val currentDataset = layerNeuronRDD.filter( obj => 
-                                                     obj._1.equals(currentLayerNeuron.layer) && 
-                                                     obj._2.equals(currentLayerNeuron.neuronID)
+                                                     obj._1.equals(currentLayerNeuron.parentLayer) && 
+                                                     obj._2.equals(currentLayerNeuron.parentNeuronID)
                                            )
                                            .map(obj => obj._3)
 
-       var isGrown : Boolean = false 
+       var isGrown = false 
      
        val attribVectorSize = currentDataset.first.attributeVector.size
 
        val currentLayer = SOMLayer(
-                       parentNeuronID = currentLayerNeuron.neuronID, 
-                       layer = currentLayerNeuron.layer + 1, 
                        rowDim = 2, 
                        colDim = 2,
-                       parentNeuronMQE = layer0Neuron.mqe,
+                       parentNeuronID = currentLayerNeuron.parentNeuronID, 
+                       parentLayer = currentLayerNeuron.parentLayer, 
+                       parentNeuronMQE = currentLayerNeuron.parentNeuronMQE,
                        vectorSize = attribVectorSize)
      
        println("BEFORE: RANDOM>>>>>")
@@ -104,15 +106,42 @@ class GHSom() extends Serializable {
            // computes the layer's MQE_m and updates the mqe for individual neurons in the layer
            currentLayer.computeMQE_m(currentDataset)
            // Grows the layer, adding row/column. Runs on the driver
-           isGrown = currentLayer.grow(GHSomConfig.TAU1, mqe0)
-           println("AFTER: TRAINED>>>>>")
-           currentLayer.display()
+           isGrown = currentLayer.grow(GHSomConfig.TAU1)
+           currentLayer.gridSize
        }while(isGrown)
          
+       // MapReduce : Uses driver and workers, updating the neurons at the driver
+       // computes the layer's MQE_m and updates the mqe for individual neurons in the layer
+       //currentLayer.computeMQE_m(currentDataset)
+
+       println("AFTER: TRAINED>>>>>")
+       currentLayer.display()
        // Logic for hierarchical growth
        // find neurons in current layer not abiding the condition
        // for the current dataset find the rdd of instances for the neurons to expand
        // add the instances to the dataset RDD - layer, neuronid, instance
+         
+       // check for mqe_i > TAU2 x mqe_parentNeuron
+         
+       val neuronsToExpand : mutable.Set[Neuron] = currentLayer.getNeuronsForHierarchicalExpansion(GHSomConfig.TAU2)
+       
+       neuronsToExpand.foreach { neuron =>  
+         layerQueue.enqueue(LayerNeuron(currentLayer.layerID, neuron.id, neuron.mqe))
+         println("EXPANDING : " + currentLayer.layerID + ":" + neuron.id)
+       }
+       
+       //val neuronIDsToExpand = neuronsToExpand.map(neuron => neuron.id)
+       
+       //println("Before hierarchical:" + layerNeuronRDD.count)
+       layerNeuronRDD = currentLayer.populateRDDForHierarchicalExpansion(layerNeuronRDD, currentDataset, neuronsToExpand)
+       layerNeuronRDD = layerNeuronRDD.filter( tup => !(tup._1.equals(currentLayerNeuron.parentLayer) &&  
+                                                       tup._2.equals(currentLayerNeuron.parentNeuronID))
+                                             )
+       currentLayer.dumpToFile
+       //println("After hierarchical:" + layerNeuronRDD.count)
+       //println("RDDS to be added: " + rddForNeurons.count())
+       //layerNeuronRDD = layerNeuronRDD.union(rddForNeurons).distinct()
+       println("Expanded")
      }
      
      /*
@@ -140,10 +169,11 @@ class GHSom() extends Serializable {
      * 
      */
      
-     
-     
    }
    
+   def trainLayer(layer : Int, parentNeuron : Neuron, dataset : RDD[Instance]) {
+     
+   }
    
    
 }

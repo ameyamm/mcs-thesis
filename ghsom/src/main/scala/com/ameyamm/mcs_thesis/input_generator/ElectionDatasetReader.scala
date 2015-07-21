@@ -842,7 +842,7 @@ object ElectionDatasetReader {
     } 
     println(maxVector.mkString)
 		*/
-		val dataset = sc.cassandraTable("uscensus1990", "dataset_sample") 
+		val dataset = sc.cassandraTable("uscensus1990", "dataset") 
 		val datasetReader : ElectionDatasetReader = new ElectionDatasetReader(dataset) 
     datasetReader.printDataset()
     val electionDataset = datasetReader.getDataset

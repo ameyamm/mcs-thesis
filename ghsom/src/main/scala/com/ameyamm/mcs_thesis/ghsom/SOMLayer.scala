@@ -6,15 +6,18 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.PairRDDFunctions
 import scala.collection.mutable
+import scala.collection.immutable
+
 
 /**
  * @author ameya
  */
-class SOMLayer(
+class SOMLayer private (
+    private val _layerID : Int, 
+    private var _rowDim : Int, 
+    private var _colDim : Int, 
     private val _parentNeuronID : String,
-    private val _layer : Int,
-    private val _rowDim : Int, 
-    private val _colDim : Int, 
+    private val _parentLayer : Int,
     private val parentNeuronMQE : Double, 
     attributeVectorSize : Int
 ) extends Serializable {
@@ -29,6 +32,14 @@ class SOMLayer(
                 )
       )
                                           
+  def layerID : Int = _layerID
+
+  def parentLayer : Int = _parentLayer
+
+  def gridSize() {
+    println("LAYER SIZE: " + _rowDim + "x" + _colDim)
+  }
+  
   def display() {
     neurons.foreach( neuronRow => neuronRow.foreach(neuron => println(neuron))) 
   }
@@ -127,7 +138,7 @@ class SOMLayer(
    * @param tau1 parameter controlling the horizontal growth of a layer
    * @param mqe_u mean quantization error of the parent neuron of the layer 
    */
-  def grow(tau1 : Double, mqe_u : Double) : Boolean = {
+  def grow(tau1 : Double) : Boolean = {
     // compute MQEm of the layer and neuron with max mqe
     var mqe_m : Double = 0
     var mappedNeuronsCnt : Int = 0 
@@ -148,7 +159,7 @@ class SOMLayer(
     }
     
     println("GROWTH >>>> " + mqe_m + ":" + mappedNeuronsCnt)
-    if (mqe_m / mappedNeuronsCnt > tau1 * mqe_u) {
+    if (mqe_m / mappedNeuronsCnt > tau1 * this.parentNeuronMQE) {
       var neuronPair : NeuronPair = getNeuronAndNeighbourForGrowing(maxMqeNeuron)
       neurons = getGrownLayer(neuronPair)
       true
@@ -177,6 +188,68 @@ class SOMLayer(
   }
   */
   
+  def getNeuronsForHierarchicalExpansion(tau2 : Double) : mutable.Set[Neuron] = {
+      val neuronSet = new mutable.HashSet[Neuron]()
+      
+      neurons.foreach { 
+        neuronRow => 
+          neuronRow.foreach { 
+            neuron => 
+              if (neuron.mqe > tau2 * parentNeuronMQE) { 
+                println("getNeuronsForHierarchicalExpansion>>>>" + neuron + ":" + parentNeuronMQE + "x" + tau2)
+                neuronSet += neuron
+              }
+          } 
+      }
+      
+      neuronSet
+  }
+  
+  def populateRDDForHierarchicalExpansion(
+      addToDataset : RDD[(Int, String, Instance)], 
+      dataset : RDD[Instance], 
+      neuronsToExpand : mutable.Set[Neuron]
+      ) : RDD[(Int, String, Instance)] = {
+    
+    val context = dataset.context
+    
+    val rddRecordList = new mutable.ListBuffer[(Int, String, Instance)]
+    
+    val neurons = this.neurons
+    
+    val layerID = this.layerID
+    
+    val neuronIdsToExpand = neuronsToExpand.map(neuron => neuron.id)
+    var origDataset = addToDataset
+    
+    val datasetToAdd = 
+          new PairRDDFunctions[String, List[(Int, String, Instance)]](dataset.map{
+          instance => 
+                   val bmu = SOMLayerFunctions.findBMU(neurons, instance) 
+                   if (neuronIdsToExpand.contains(bmu.id)) {
+                    val tup = (layerID, bmu.id, instance)
+                    (layerID.toString + ":" + bmu.id, List(tup))
+                    //val list = List[(Int, String, Instance)]()
+                   }
+                   else 
+                    ("-1", List((-1, "-1", null)))
+          })
+    
+    val newDataset = datasetToAdd.reduceByKey(SOMLayerFunctions.mergeDatasetsForHierarchicalExpansion)
+                                  .filter(tup => !tup._1.equals("-1"))
+                                  .flatMap(tup => tup._2)
+    
+    origDataset = origDataset ++ newDataset
+    //rddRecordList.foreach(tup => println("RDD TO APPEND:" + tup._1 + ":" + tup._2 + ":" + tup._3.label))
+    //context.parallelize(rddRecordList)
+    //println("populateRDDForHierarchicalExpansion size:" + origDataset.count)
+    origDataset
+  }
+  
+  def dumpToFile {
+    
+  }
+  
   private def updateNeuronMQEs(
       tuple : (String, (Double, Double, Long))) : Unit = {
     val neuronRowCol = tuple._1.split(",")
@@ -187,8 +260,6 @@ class SOMLayer(
     neurons(neuronRow)(neuronCol).mappedInstanceCount = tuple._2._3
     neurons(neuronRow)(neuronCol).clearMappedInputs()
   }
-
-  
   
   private case class NeuronPair ( neuron1 : Neuron, neuron2 : Neuron ) {
        override def equals( obj : Any ) : Boolean = {
@@ -203,9 +274,6 @@ class SOMLayer(
   
        override def hashCode : Int = neuron1.hashCode() + neuron2.hashCode()
   }
-  
-  
-  
   
   //private def getNeuronAndNeighbourForGrowing(tau1 : Double, ghsomQE : Double) : NeuronPair = {
   private def getNeuronAndNeighbourForGrowing(errorNeuron : Neuron) : NeuronPair = {  
@@ -248,6 +316,8 @@ class SOMLayer(
       }
     }*/
     
+    
+    
   }
   
   private def getGrownLayer(neuronPair : NeuronPair) : Array[Array[Neuron]] = {
@@ -256,9 +326,11 @@ class SOMLayer(
     // add a row
     if (neuronPair.neuron1.row != neuronPair.neuron2.row) { 
       newNeurons = getRowAddedLayer(neuronPair)
+      _rowDim += 1
     }
     else { // add a column
       newNeurons = getColumnAddedLayer(neuronPair)
+      _colDim += 1
     }
     
     newNeurons
@@ -444,12 +516,21 @@ object SOMLayerFunctions {
     (tup._1/tup._2, tup._1, tup._2)
   }
   
+  def mergeDatasetsForHierarchicalExpansion(
+      tup1List : List[(Int, String, Instance)], 
+      tup2List : List[(Int, String, Instance)] 
+  ) : List[(Int, String, Instance)] = {
+    tup1List ++ tup2List
+  }
 }
 
 object SOMLayer {
   
-  def apply(parentNeuronID : String, layer : Int, rowDim : Int, colDim : Int, parentNeuronMQE : Double, vectorSize : Int) = {
-    new SOMLayer(parentNeuronID, layer, rowDim, colDim, parentNeuronMQE, vectorSize)
+  private var layerId = 0
+  
+  def apply(parentNeuronID : String, parentLayer : Int, rowDim : Int, colDim : Int, parentNeuronMQE : Double, vectorSize : Int) = {
+    layerId += 1
+    new SOMLayer(layerId, rowDim, colDim, parentNeuronID, parentLayer, parentNeuronMQE, vectorSize )
   }
   
   def main(args : Array[String]) {
