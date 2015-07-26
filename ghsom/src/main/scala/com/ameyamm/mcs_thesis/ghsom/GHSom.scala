@@ -36,17 +36,13 @@ class GHSom() extends Serializable {
      
      layer0Neuron.mqe = mqe0
      
-     println("<<<<<<<<<<<<<<<<<<<<<<<<<")
-     println("SumofInstances-" + sumOfInstances)
      println("meanInstance - " + meanInstance)
-     println("m0:" + m0.mkString(":"))
      println("total Instances : " + totalInstances)
      println("mqe0 : " + mqe0)
      println(">>>>>>>>>>>>>>>>>>>>>>>>>")
      
      // ID of a particular SOMLayer. there can be many layers in the same layer. this is like a PK
      val layer = 0 
-     //val layer0NeuronID = "0,0"
      var layerNeuronRDD = dataset.map(instance => (layer, layer0Neuron.id, instance))
      
      // layer and neuron is the pared layer and neuron
@@ -82,6 +78,8 @@ class GHSom() extends Serializable {
                                                      obj._2.equals(currentLayerNeuron.parentNeuronID)
                                            )
                                            .map(obj => obj._3)
+                                           
+       val instanceCount = currentDataset.count
 
        var isGrown = false 
      
@@ -95,8 +93,6 @@ class GHSom() extends Serializable {
                        parentNeuronMQE = currentLayerNeuron.parentNeuronMQE,
                        vectorSize = attribVectorSize)
      
-       println("BEFORE: RANDOM>>>>>")
-    
        do {
            // runs on driver
            currentLayer.clearMappedInputs
@@ -105,16 +101,23 @@ class GHSom() extends Serializable {
            // MapReduce : Uses driver and workers, updating the neurons at the driver
            // computes the layer's MQE_m and updates the mqe for individual neurons in the layer
            currentLayer.computeMQE_m(currentDataset)
-           // Grows the layer, adding row/column. Runs on the driver
-           isGrown = currentLayer.grow(GHSomConfig.TAU1)
+           println("Trained Layer")
            currentLayer.gridSize
+           currentLayer.display()
+           if (currentLayer.totalNeurons < instanceCount * GHSomConfig.GRID_SIZE_FACTOR)
+           // Grows the layer, adding row/column. Runs on the driver
+             isGrown = currentLayer.grow(GHSomConfig.TAU1)
+           else
+             isGrown = false 
+           println("After growth")
+           currentLayer.gridSize
+           currentLayer.display()
        }while(isGrown)
          
        // MapReduce : Uses driver and workers, updating the neurons at the driver
        // computes the layer's MQE_m and updates the mqe for individual neurons in the layer
-       //currentLayer.computeMQE_m(currentDataset)
+       // currentLayer.computeMQE_m(currentDataset)
 
-       println("AFTER: TRAINED>>>>>")
        currentLayer.display()
        // Logic for hierarchical growth
        // find neurons in current layer not abiding the condition
@@ -123,59 +126,22 @@ class GHSom() extends Serializable {
          
        // check for mqe_i > TAU2 x mqe_parentNeuron
          
-       val neuronsToExpand : mutable.Set[Neuron] = currentLayer.getNeuronsForHierarchicalExpansion(GHSomConfig.TAU2)
+       val neuronsToExpand : mutable.Set[Neuron] = currentLayer.getNeuronsForHierarchicalExpansion(GHSomConfig.TAU2, totalInstances)
+       
        
        neuronsToExpand.foreach { neuron =>  
+         println("Expand neuron: " + currentLayer.layerID + " : " + neuron.id + " : " + neuron.mqe)  
          layerQueue.enqueue(LayerNeuron(currentLayer.layerID, neuron.id, neuron.mqe))
-         println("EXPANDING : " + currentLayer.layerID + ":" + neuron.id)
        }
        
-       //val neuronIDsToExpand = neuronsToExpand.map(neuron => neuron.id)
-       
-       //println("Before hierarchical:" + layerNeuronRDD.count)
        layerNeuronRDD = currentLayer.populateRDDForHierarchicalExpansion(layerNeuronRDD, currentDataset, neuronsToExpand)
        layerNeuronRDD = layerNeuronRDD.filter( tup => !(tup._1.equals(currentLayerNeuron.parentLayer) &&  
                                                        tup._2.equals(currentLayerNeuron.parentNeuronID))
                                              )
+       println("layerNeuronRDD Count : " + layerNeuronRDD.count)
        currentLayer.dumpToFile
-       //println("After hierarchical:" + layerNeuronRDD.count)
-       //println("RDDS to be added: " + rddForNeurons.count())
-       //layerNeuronRDD = layerNeuronRDD.union(rddForNeurons).distinct()
-       println("Expanded")
      }
-     
-     /*
-     while(!layerQueue.isEmpty) {
-       val currentLayer = layerQueue.dequeue()
-       //val parentLayerMQE0 = 
-       // Grow Layer
-       do {
-         // runs on driver
-         currentLayer.clearMappedInputs
-         // MapReduce : Uses driver and workers returning the updated values to the driver 
-         currentLayer.train(dataset)
-         // MapReduce : Uses driver and workers, updating the neurons at the driver
-         // computes the layer's MQE_m and updates the mqe for individual neurons in the layer
-         currentLayer.computeMQE_m(dataset)
-         // Grows the layer, adding row/column. Runs on the driver
-         isGrown = currentLayer.grow(GHSomConfig.TAU1, mqe0)
-         println("AFTER: TRAINED>>>>>")
-         currentLayer.display()
-       }while(isGrown)
-         
-       
-     }
-     somLayer1.display()
-     * 
-     */
-     
    }
-   
-   def trainLayer(layer : Int, parentNeuron : Neuron, dataset : RDD[Instance]) {
-     
-   }
-   
-   
 }
 
 object GHSomFunctions {

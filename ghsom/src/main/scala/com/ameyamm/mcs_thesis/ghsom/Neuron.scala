@@ -6,11 +6,11 @@ package com.ameyamm.mcs_thesis.ghsom
 
 import scala.collection.mutable
 import scala.collection.immutable
-import scala.math.{exp,pow}
+import scala.math.{exp,pow,abs}
 
 class Neuron (
-    private val _row : Int, 
-    private val _column : Int, 
+    private var _row : Int, 
+    private var _column : Int, 
     private var _neuronInstance : Instance = null
   ) extends Serializable {
   private val _mappedInputs : mutable.ListBuffer[Instance] = mutable.ListBuffer()
@@ -21,6 +21,8 @@ class Neuron (
   
   private var _mappedInstanceCount : Long = 0
   
+  private var _id : String = _row.toString() + "," + _column.toString() 
+  
   /* Getters and setters */
   def row : Int = _row 
   
@@ -30,7 +32,9 @@ class Neuron (
   
   def neuronInstance_= (instance : Instance) : Unit = _neuronInstance = instance 
   
-  def id : String = row.toString() + "," + column.toString() 
+  def id : String = _id
+  
+  def id_=(value : String) : Unit = _id = value 
   
   def mappedInputs : mutable.ListBuffer[Instance] = _mappedInputs
   
@@ -46,6 +50,8 @@ class Neuron (
 
   def mappedInstanceCount_= (value : Long): Unit = _mappedInstanceCount = value
   
+  def updateRowCol(i : Int, j : Int) : Unit = { _row = i ; _column = j; _id = _row.toString() + "," + _column.toString() }
+  
   /* Methods */
   def addToMappedInputs(instance : Instance) {
     _mappedInputs += instance
@@ -60,10 +66,9 @@ class Neuron (
   }
   
   def computeNeighbourhoodFactor(neuron : Neuron, iteration : Long) : Double = {
-    exp(-(pow(this.row - neuron.row, 2) + pow(this.column - neuron.column , 2)/pow(iteration,2)))    
+    //exp(-(pow(this.row - neuron.row, 2) + pow(this.column - neuron.column , 2)/pow(iteration,2)))    
+    exp(-(abs(this.row - neuron.row) + abs(this.column - neuron.column)) / iteration)
   }
-  
-  
   
   override def toString() : String = {
     var neuronString = "[" + row + "," + column + "]" + "(" + qe + ":" + mqe + ")" + ":" + "["
@@ -82,7 +87,7 @@ class Neuron (
     }
   }
   
-  override def hashCode = id.hashCode()
+  override def hashCode : Int = _row + _column
   
 }
 

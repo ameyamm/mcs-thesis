@@ -7,6 +7,11 @@ import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.PairRDDFunctions
 import scala.collection.mutable
 import scala.collection.immutable
+import scala.collection.Set
+import scala.math.{abs,max}
+import org.apache.commons
+import org.apache.commons.io.FileUtils
+import java.io.File
 
 
 /**
@@ -40,7 +45,17 @@ class SOMLayer private (
     println("LAYER SIZE: " + _rowDim + "x" + _colDim)
   }
   
+  def totalNeurons : Long = _rowDim * _colDim
+  
   def display() {
+    println("Display Layer")
+    println("Layer Details -> id : " + 
+        this._layerID + 
+        ";parent Layer : " + 
+        this.parentLayer + 
+        ";parent Neuron" +
+        this._parentNeuronID)
+    println("Layer:")
     neurons.foreach( neuronRow => neuronRow.foreach(neuron => println(neuron))) 
   }
   
@@ -57,20 +72,21 @@ class SOMLayer private (
     // TODO : neurons could be made broadcast variable
     val neurons = this.neurons
     
-    for ( iteration <- 0 until GHSomConfig.EPOCHS ) {
-        val t = GHSomConfig.EPOCHS - iteration 
+    val maxIterations = max(max(this._rowDim, this._colDim),GHSomConfig.EPOCHS)
+    
+    for ( iteration <- 0 until maxIterations ) {
+      val t = maxIterations - iteration 
         
         /**** MapReduce Begins ****/
-        // neuronUpdatesRDD is a RDD of (numerator, denominator) for the update of neurons at the end of epoch
-        // runs on workers
-        val neuronUpdatesRDD = dataset.flatMap { instance => 
+      // neuronUpdatesRDD is a RDD of (numerator, denominator) for the update of neurons at the end of epoch
+      // runs on workers
+      val neuronUpdatesRDD = dataset.flatMap { instance => 
                                   val bmu : Neuron = SOMLayerFunctions.findBMU(neurons, instance)
                                   
                                   val temp = neurons.flatten
                                   
                                   temp.map { neuron => 
                                     val neighbourhoodFactor = neuron.computeNeighbourhoodFactor(bmu, t)
-                                   
                                     (
                                         neuron.id, 
                                         (
@@ -114,21 +130,20 @@ class SOMLayer private (
     // runs on workers 
     // creates a map of (neuron id -> (quantization error, instance count = 1)) 
     val neuronsQE = new PairRDDFunctions[String, (Double, Long)](
-                    dataset.map { instance => 
+                      dataset.map { instance => 
                         val bmu = SOMLayerFunctions.findBMU(neurons, instance)
                         
                         val qe = bmu.neuronInstance.getDistanceFrom(instance)
                         (bmu.id,(qe,1L))         
-                    })
+                      }
+                    )
     
     // combines / reduces all the quantization errors
     val neuronMQEs = neuronsQE.reduceByKey(SOMLayerFunctions.combineNeuronsQE)
                               .mapValues(SOMLayerFunctions.computeMQEForNeuron)
 
-    println("AMU neuronMQE")
-    neuronMQEs.take(5).foreach(t => println("ID : " + t._1 + "\nMQE : " + t._2._1 + "\n QE:" + t._2._2 +"\nMapped Count:" + t._2._3))
-
-    neuronMQEs.collectAsMap.map(updateNeuronMQEs) // return to driver
+    neuronMQEs.collectAsMap
+              .map(updateNeuronMQEs) // return to driver
     /***** MapReduce Ends *****/
   }
   
@@ -158,10 +173,16 @@ class SOMLayer private (
       }
     }
     
-    println("GROWTH >>>> " + mqe_m + ":" + mappedNeuronsCnt)
     if (mqe_m / mappedNeuronsCnt > tau1 * this.parentNeuronMQE) {
-      var neuronPair : NeuronPair = getNeuronAndNeighbourForGrowing(maxMqeNeuron)
-      neurons = getGrownLayer(neuronPair)
+      //var neuronPair : NeuronPair = getNeuronAndNeighbourForGrowing(maxMqeNeuron)
+      var neuronPairSet = getNeuronAndNeighbourSetForGrowing(tau1 * parentNeuronMQE)
+      
+      for (pair <- neuronPairSet) {
+        println("Neurons to Expand")  
+        println(pair)
+      }
+      
+      neurons = getGrownLayer(neuronPairSet)
       true
       /*
       val growNeurons : mutable.Set[NeuronPair] = new mutable.HashSet[NeuronPair]()
@@ -188,15 +209,15 @@ class SOMLayer private (
   }
   */
   
-  def getNeuronsForHierarchicalExpansion(tau2 : Double) : mutable.Set[Neuron] = {
+  def getNeuronsForHierarchicalExpansion(tau2 : Double, instanceCount : Long) : mutable.Set[Neuron] = {
       val neuronSet = new mutable.HashSet[Neuron]()
       
       neurons.foreach { 
         neuronRow => 
           neuronRow.foreach { 
             neuron => 
-              if (neuron.mqe > tau2 * parentNeuronMQE) { 
-                println("getNeuronsForHierarchicalExpansion>>>>" + neuron + ":" + parentNeuronMQE + "x" + tau2)
+              if (neuron.mappedInstanceCount > GHSomConfig.HIERARCHICAL_COUNT_FACTOR * instanceCount &&
+                  neuron.mqe > tau2 * parentNeuronMQE) { 
                 neuronSet += neuron
               }
           } 
@@ -248,17 +269,33 @@ class SOMLayer private (
   
   def dumpToFile {
     
+    val strNeurons = neurons.map(row => {
+                                  row.map(neuron => neuron.neuronInstance.attributeVector.mkString(",")).mkString("|")
+                               }
+                            )
+                            .mkString("\n")
+    
+    val filename = "SOMLayer_" + this.layerID + "_" + this._parentLayer + "_" + this._parentNeuronID + ".data"
+
+    val encoding : String = null
+    
+    FileUtils.writeStringToFile(new File(filename), strNeurons, encoding)
   }
   
   private def updateNeuronMQEs(
       tuple : (String, (Double, Double, Long))) : Unit = {
+
     val neuronRowCol = tuple._1.split(",")
+
     val (neuronRow, neuronCol) = (neuronRowCol(0).toInt, neuronRowCol(1).toInt)
+    
+    println("Neuron - " + tuple._1 + "; MQE : " + tuple._2._1 + ";mappedInstance Count : " + tuple._2._3) 
     
     neurons(neuronRow)(neuronCol).mqe = tuple._2._1
     neurons(neuronRow)(neuronCol).qe = tuple._2._2
     neurons(neuronRow)(neuronCol).mappedInstanceCount = tuple._2._3
     neurons(neuronRow)(neuronCol).clearMappedInputs()
+
   }
   
   private case class NeuronPair ( neuron1 : Neuron, neuron2 : Neuron ) {
@@ -273,6 +310,57 @@ class SOMLayer private (
        }
   
        override def hashCode : Int = neuron1.hashCode() + neuron2.hashCode()
+       
+       def isSameRow : Boolean = {
+         if (neuron1.row == neuron2.row)
+           true
+         else 
+           false
+       }
+       
+       def isSameCol : Boolean = {
+         if (neuron1.column == neuron2.column) 
+           true
+         else
+           false
+       }
+       
+       override def toString : String = {
+         "Neuron1: " + neuron1.id + ", Neuron2: " + neuron2.id
+       }
+  }
+  
+  private def getNeuronAndNeighbourSetForGrowing(
+      criterion : Double
+      ) : Set[NeuronPair] = {
+    val neuronNeighbourSet = new mutable.HashSet[NeuronPair]()
+    
+    for(neuronRow <- neurons) {
+      for (neuron <- neuronRow) {
+        if (neuron.mqe > criterion) {
+          val dissimilarNeighbour = getMostDissimilarNeighbour(neuron)
+          neuronNeighbourSet += NeuronPair(neuron, dissimilarNeighbour)
+        }
+      }
+    }
+    neuronNeighbourSet
+  }
+ 
+  private def getMostDissimilarNeighbour(refNeuron : Neuron) = {
+    val neighbours = getNeighbourNeurons(refNeuron)
+    
+    var dissimilarNeighbour : Neuron = null
+    var maxDist = 0.0
+    // find the dissimilar neighbour
+    for (neighbour <- neighbours) {
+      val dist = refNeuron.neuronInstance.getDistanceFrom(neighbour.neuronInstance)
+      if (dist > maxDist) {
+        dissimilarNeighbour = neighbour
+        maxDist = dist
+      }
+    }
+    
+    dissimilarNeighbour
   }
   
   //private def getNeuronAndNeighbourForGrowing(tau1 : Double, ghsomQE : Double) : NeuronPair = {
@@ -281,6 +369,7 @@ class SOMLayer private (
     val neighbours = getNeighbourNeurons(errorNeuron)
     var dissimilarNeighbour : Neuron = null
     var maxDist = 0.0
+    
     // find the dissimilar neighbour
     for (neighbour <- neighbours) {
       val dist = errorNeuron.neuronInstance.getDistanceFrom(neighbour.neuronInstance)
@@ -316,10 +405,153 @@ class SOMLayer private (
       }
     }*/
     
+  }
+
+  private def getGrownLayer(neuronNeighbourSet : Set[NeuronPair]) 
+  : Array[Array[Neuron]] = {
     
+    // get count of rows, columns to be added
     
+    val currentNeuronLayer = neurons 
+    
+    var rowsToAdd = 0 
+    var colsToAdd = 0 
+    
+    for (neuronPair <- neuronNeighbourSet) {
+      if (neuronPair.isSameRow) 
+        colsToAdd += 1
+      else if (neuronPair.isSameCol)
+        rowsToAdd += 1
+      else {
+        throw new IllegalArgumentException("neighbour set contains improper neighbour pair")
+      }
+    }
+    
+    val newNeurons = Array.ofDim[Neuron](_rowDim + rowsToAdd, _colDim + colsToAdd)
+    
+    // copy original array as it is
+    for (i <- 0 until neurons.size) {
+      for ( j <- 0 until neurons(0).size) {
+        newNeurons(i)(j) = neurons(i)(j)
+      }
+    }
+    
+    _rowDim += rowsToAdd
+    _colDim += colsToAdd
+    
+    // update the new array for each neuron pair
+    for (neuronPair <- neuronNeighbourSet) {
+      val (rowIdxNeuron1, colIdxNeuron1) : (Int, Int)= getNeuronRowColIdxInLayer(neuronPair.neuron1, newNeurons)
+      
+      if (neuronPair.isSameRow) {
+        if (neuronPair.neuron1.column < neuronPair.neuron2.column) {
+          // update and shift the values after this column
+          insertInNextCol(newNeurons, colIdxNeuron1)
+        }
+        else 
+          // update and shift the values after previous column
+          insertInNextCol(newNeurons, colIdxNeuron1 - 1)
+      }
+      else {
+        if (neuronPair.neuron1.row < neuronPair.neuron2.row) {
+          // update and shift the values after this row 
+          insertInNextRow(newNeurons, rowIdxNeuron1)
+        }
+        else 
+          // update and shift the values after previous row 
+          insertInNextRow(newNeurons, rowIdxNeuron1 - 1)
+      }
+    }
+
+    for (i <- 0 until newNeurons.size) {
+      for (j <- 0 until newNeurons(0).size) {
+        newNeurons(i)(j).updateRowCol(i, j)
+      }
+    }
+    
+    newNeurons
   }
   
+  private def insertInNextRow(neuronArray : Array[Array[Neuron]], row : Int) {
+   
+    if (row + 1 >= neuronArray.size || row + 2 >= neuronArray.size)
+      throw new IllegalArgumentException("row value improper")
+    
+    for ( i <- neuronArray.size - 1 until row + 1 by -1 ) {
+      for (j <- 0 until neuronArray(0).size) {
+        neuronArray(i)(j) = neuronArray(i-1)(j)
+      }
+    } 
+
+    // update with the average instance 
+    for (j <- 0 until neuronArray(0).size ) {
+      if (neuronArray(row)(j) != null && neuronArray(row + 2)(j) != null) {
+        neuronArray(row + 1)(j) = Neuron(
+                                    row + 1, 
+                                    j, 
+                                    Instance.averageInstance(
+                                        neuronArray(row)(j).neuronInstance, 
+                                        neuronArray(row + 2)(j).neuronInstance 
+                                        )
+                                    )
+        neuronArray(row + 1)(j).id = neuronArray(row)(j).id + "+" + neuronArray(row + 2)(j).id
+      }
+    }
+  }
+  
+  private def insertInNextCol(neuronArray : Array[Array[Neuron]], col : Int) {
+   
+    if (col + 1 >= neuronArray(0).size || col + 2 >= neuronArray(0).size)
+      throw new IllegalArgumentException("row value improper")
+    
+    for (j <- neuronArray(0).size - 1 until col + 1 by -1 ) {
+      for ( i <- 0 until neuronArray.size ) {
+        neuronArray(i)(j) = neuronArray(i)(j - 1)
+      }
+    } 
+
+    // update with the average instance 
+    for (i <- 0 until neuronArray.size ) {
+      if (neuronArray(i)(col) != null && neuronArray(i)(col + 2) != null) {
+        neuronArray(i)(col + 1) = Neuron(
+                                    i, 
+                                    col + 1, 
+                                    Instance.averageInstance(
+                                        neuronArray(i)(col).neuronInstance, 
+                                        neuronArray(i)(col + 2).neuronInstance 
+                                        )
+                                    )
+        neuronArray(i)(col + 1).id = neuronArray(i)(col).id + "+" + neuronArray(i)(col + 2).id
+      }
+    }
+  }
+  
+  private def getNeuronRowColIdxInLayer(neuron : Neuron, neuronArray : Array[Array[Neuron]]) : (Int, Int) = {
+
+    var rowColTuple : (Int, Int) = (0,0)
+    
+    var found = false 
+    var i = 0
+    while ( i < neuronArray.size && !found ) {
+      var j = 0
+      while ( j < neuronArray(0).size && !found ) {
+        if ( neuronArray(i)(j) != null && neuron.id.equals(neuronArray(i)(j).id) ) {
+          rowColTuple = (i,j)
+          found = true
+        }
+        j += 1
+      }
+      i += 1
+    }
+    
+    if (found == false)
+      throw new IllegalStateException("Improper state of neuron Array")
+
+    rowColTuple
+  }
+  
+  
+  /*
   private def getGrownLayer(neuronPair : NeuronPair) : Array[Array[Neuron]] = {
     
     var newNeurons : Array[Array[Neuron]] = null
@@ -368,6 +600,8 @@ class SOMLayer private (
     
     newNeurons
   }
+  * 
+  */
   
   private def getColumnAddedLayer(neuronPair : NeuronPair) : Array[Array[Neuron]] = {
     var newNeurons = Array.ofDim[Neuron](_rowDim, _colDim + 1) // add a column
