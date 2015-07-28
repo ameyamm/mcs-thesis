@@ -50,7 +50,13 @@ class Neuron (
 
   def mappedInstanceCount_= (value : Long): Unit = _mappedInstanceCount = value
   
-  def updateRowCol(i : Int, j : Int) : Unit = { _row = i ; _column = j; _id = _row.toString() + "," + _column.toString() }
+  def updateRowCol(i : Int, j : Int) : Unit = { 
+    _row = i ; 
+    _column = j; 
+    _id = _row.toString() + "," + _column.toString();  
+    qe = 0
+    mqe = 0
+  }
   
   /* Methods */
   def addToMappedInputs(instance : Instance) {
@@ -66,8 +72,8 @@ class Neuron (
   }
   
   def computeNeighbourhoodFactor(neuron : Neuron, iteration : Long) : Double = {
-    //exp(-(pow(this.row - neuron.row, 2) + pow(this.column - neuron.column , 2)/pow(iteration,2)))    
-    exp(-(abs(this.row - neuron.row) + abs(this.column - neuron.column)) / iteration)
+    exp(-(pow(this.row - neuron.row, 2) + pow(this.column - neuron.column , 2)/(2 * pow(iteration,2))))    
+    //exp(-(abs(this.row - neuron.row) + abs(this.column - neuron.column)) / iteration)
   }
   
   override def toString() : String = {

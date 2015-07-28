@@ -71,6 +71,7 @@ class GHSom() extends Serializable {
        
        val currentLayerNeuron = layerQueue.dequeue
        
+       println("Processing for parentLayer :" + currentLayerNeuron.parentLayer + ", parent neuron : " + currentLayerNeuron.parentNeuronID)
        // make dataset for this layer
 
        val currentDataset = layerNeuronRDD.filter( obj => 
@@ -81,6 +82,8 @@ class GHSom() extends Serializable {
                                            
        val instanceCount = currentDataset.count
 
+       println("Instance count in dataset for current layer " + instanceCount)
+       
        var isGrown = false 
      
        val attribVectorSize = currentDataset.first.attributeVector.size
