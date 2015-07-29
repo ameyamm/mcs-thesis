@@ -10,10 +10,8 @@ import util
 import numpy as np
 
 from math import sqrt
-from PIL import Image
 import matplotlib.pyplot as plt
-
-from scipy.misc import imresize
+import matplotlib.cm as cm
 
 def getSomLayerFromFile(filename):
     somLayer = list() # array of array of vectors
@@ -101,22 +99,44 @@ def getUMatrix(somLayer) :
             print("Umatrix[{}][{}]:{}".format(row,col,umatrix[row][col])),# end = "", flush = True)
         print
             
-    return umatrix
+    return np.array(umatrix)
 
-def umatrixImage(filename, umatrix):
+def getVectorFromFile(filename):
+    return np.fromfile(filename, sep = ',')
+
+def umatrixImage(filename, somMatrix, umatrix, maxVector, minVector):
     #umatrixNumpy = imresize(np.array(umatrix),(200,200),interp = 'cubic')
     
     #image = Image.fromarray(umatrixNumpy, mode='L')
-    plt.imshow(np.array(umatrix))#, cmap, norm, aspect, interpolation, alpha, vmin, vmax, origin, extent, shape, filternorm, filterrad, imlim, resample, url, hold)
+    
+    numberOfAttributes = maxVector.size
+    
+    plt.figure(1)
+    plt.subplot(2, numberOfAttributes, int(numberOfAttributes/2))
+    plt.imshow(umatrix, cmap = plt.get_cmap('Greys'))
+    plt.colorbar( orientation='horizontal' )
+    
+    for i in range(numberOfAttributes):
+        somLayerForAttribute = np.copy(somMatrix[...,i])
+        
+        print ("som For Attribute {}-{}:{}".format(i, maxVector[i], minVector[i]))
+        print somLayerForAttribute
+        for elem in np.nditer(somLayerForAttribute, op_flags = ['readwrite']):
+            elem[...] = (elem * (maxVector[i] - minVector[i])) + minVector[i]
+        
+        plt.subplot(2, numberOfAttributes, numberOfAttributes + i + 1)
+        plt.imshow(somLayerForAttribute)
+        plt.colorbar( orientation='horizontal')
+    
     #image = Image.fromarray(np.array(umatrix), mode = 'RGB')
     #image.save(filename + ".jpeg")
     
-    plt.colorbar()
+    #plt.colorbar()
     plt.show()
-
+    
 def main(args):
-    if (len(args) != 2):
-        print("Usage : " + args[0] + " matrixfile")
+    if (len(args) != 4):
+        print("Usage : " + args[0] + " matrixfile maxVectorFile minVectorFile")
         return  
     
     filename = args[1]
@@ -125,7 +145,15 @@ def main(args):
     
     umatrix = getUMatrix(somLayer)
     
-    umatrixImage(filename, umatrix)
+    maxVectorFile = args[2]
+    
+    maxVector = getVectorFromFile(maxVectorFile)
+    
+    minVectorFile = args[3]
+    
+    minVector = getVectorFromFile(minVectorFile)
+    
+    umatrixImage(filename, np.array(somLayer), umatrix, maxVector, minVector)
             
 
 if __name__ == '__main__':

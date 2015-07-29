@@ -75,8 +75,9 @@ class SOMLayer private (
     val maxIterations = max(max(this._rowDim, this._colDim),GHSomConfig.EPOCHS)
     
     for ( iteration <- 0 until maxIterations ) {
-      val t = maxIterations - iteration 
         
+      val radius = max(this._rowDim, this._colDim) / 2
+      
         /**** MapReduce Begins ****/
       // neuronUpdatesRDD is a RDD of (numerator, denominator) for the update of neurons at the end of epoch
       // runs on workers
@@ -84,9 +85,8 @@ class SOMLayer private (
                                   val bmu : Neuron = SOMLayerFunctions.findBMU(neurons, instance)
                                   
                                   val temp = neurons.flatten
-                                  
                                   temp.map { neuron => 
-                                    val neighbourhoodFactor = neuron.computeNeighbourhoodFactor(bmu, t)
+                                    val neighbourhoodFactor = neuron.computeNeighbourhoodFactor(bmu, iteration, maxIterations, radius)
                                     (
                                         neuron.id, 
                                         (

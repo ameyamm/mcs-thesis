@@ -6,7 +6,7 @@ package com.ameyamm.mcs_thesis.ghsom
 
 import scala.collection.mutable
 import scala.collection.immutable
-import scala.math.{exp,pow,abs}
+import scala.math.{exp,pow,abs,log}
 
 class Neuron (
     private var _row : Int, 
@@ -71,8 +71,16 @@ class Neuron (
     _mappedInputs.clear()
   }
   
-  def computeNeighbourhoodFactor(neuron : Neuron, iteration : Long) : Double = {
-    exp(-(pow(this.row - neuron.row, 2) + pow(this.column - neuron.column , 2)/(2 * pow(iteration,2))))    
+  def computeNeighbourhoodFactor(neuron : Neuron, iteration : Long, maxIterations : Long, radius : Int) : Double = {
+    
+    /*
+     * Neighbourhood factor = exp ( - (dist between neurons) / 2 x sigma(iteration)^2
+     * 
+     * sigma(iteration) = radius of the layer x exp ( - iteration / (maxIterations / log(radius of layer) ) )
+     */
+    val sigma = radius * (exp(( -1 * iteration) / (maxIterations / log(radius))))
+    
+    exp(-1 * ((pow(this.row - neuron.row, 2) + pow(this.column - neuron.column , 2)/(2 * pow(sigma,2)))))    
     //exp(-(abs(this.row - neuron.row) + abs(this.column - neuron.column)) / iteration)
   }
   

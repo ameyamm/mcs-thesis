@@ -5,6 +5,9 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.log4j.Logger
 import org.apache.log4j.LogManager
+import org.apache.commons
+import org.apache.commons.io.FileUtils
+import java.io.File
 
 import com.ameyamm.mcs_thesis.ghsom.Instance
 import com.ameyamm.mcs_thesis.ghsom.DoubleDimension
@@ -46,6 +49,25 @@ class UserKnowledgeData (val dataset : RDD[String]) extends Serializable{
     
     val maxVector = attribMap.reduceByKey( DoubleDimension.getMax _).collectAsMap()
     val minVector = attribMap.reduceByKey( DoubleDimension.getMin _).collectAsMap()
+    
+    val maxfilename = "maxVector.data"
+    val encoding : String = null
+    val maxVectorString = maxVector.toList
+                                   .map(tup => (tup._1, tup._2))
+                                   .sortWith(_._1 < _._1)
+                                   .map(tup => tup._2)
+                                   .mkString(",")
+
+    FileUtils.writeStringToFile(new File(maxfilename), maxVectorString, encoding)
+    
+    val minfilename = "minVector.data"
+    val minVectorString = minVector.toList
+                                   .map(tup => (tup._1, tup._2))
+                                   .sortWith(_._1 < _._1)
+                                   .map(tup => tup._2)
+                                   .mkString(",")
+
+    FileUtils.writeStringToFile(new File(minfilename), minVectorString, encoding)
     
     data.map( rec => 
                   Data( 
