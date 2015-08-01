@@ -6,7 +6,7 @@ package com.ameyamm.mcs_thesis.ghsom
 
 import scala.collection.mutable
 import scala.collection.immutable
-import scala.math.{exp,pow,abs,log}
+import scala.math.{exp,pow,abs,log,sqrt}
 
 class Neuron (
     private var _row : Int, 
@@ -20,6 +20,8 @@ class Neuron (
   private var _mqe : Double = 0
   
   private var _mappedInstanceCount : Long = 0
+  
+  private var _mappedInstanceLabels : scala.collection.Set[String] = null
   
   private var _id : String = _row.toString() + "," + _column.toString() 
   
@@ -50,12 +52,16 @@ class Neuron (
 
   def mappedInstanceCount_= (value : Long): Unit = _mappedInstanceCount = value
   
+  def mappedInstanceLabels : scala.collection.Set[String] = _mappedInstanceLabels
+
+  def mappedInstanceLabels_= (set : scala.collection.Set[String]): Unit = _mappedInstanceLabels = set
   def updateRowCol(i : Int, j : Int) : Unit = { 
     _row = i ; 
     _column = j; 
     _id = _row.toString() + "," + _column.toString();  
     qe = 0
     mqe = 0
+    mappedInstanceCount = 0
   }
   
   /* Methods */
@@ -80,12 +86,12 @@ class Neuron (
      */
     val sigma = radius * (exp(( -1 * iteration) / (maxIterations / log(radius))))
     
-    exp(-1 * ((pow(this.row - neuron.row, 2) + pow(this.column - neuron.column , 2)/(2 * pow(sigma,2)))))    
+    exp(-1 * (pow(abs(this.row - neuron.row) + abs(this.column - neuron.column),2)/(pow(sigma,2))))    
     //exp(-(abs(this.row - neuron.row) + abs(this.column - neuron.column)) / iteration)
   }
   
   override def toString() : String = {
-    var neuronString = "[" + row + "," + column + "]" + "(" + qe + ":" + mqe + ")" + ":" + "["
+    var neuronString = "[" + row + "," + column + "]" + "(" + qe + ":" + mqe + ":" + mappedInstanceCount + ")" + ":" + "["
     
     neuronInstance.attributeVector.foreach( attrib => neuronString += (attrib.toString() + ",") )
     

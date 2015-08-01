@@ -2,6 +2,8 @@ package com.ameyamm.mcs_thesis.ghsom
 
 import scala.util.Random
 import org.apache.commons.lang.IllegalClassException
+import scala.math.sqrt
+import scala.compat.Platform
 
 /**
  * @author ameya
@@ -93,6 +95,7 @@ object DoubleDimension {
   
   val MinValue = DoubleDimension(Double.MinValue)
   val MaxValue = DoubleDimension(Double.MaxValue)
+  val randomGenerator = new Random(Platform.currentTime)
   
   def apply(value : Double) : DoubleDimension = {
     new DoubleDimension(value)
@@ -103,7 +106,7 @@ object DoubleDimension {
   }
   
   def getRandomDimensionValue() : DoubleDimension = {
-    new DoubleDimension(Random.nextDouble())
+    new DoubleDimension(randomGenerator.nextDouble())
   }
   
   def getMax( a : DoubleDimension, b : DoubleDimension ) : DoubleDimension = {

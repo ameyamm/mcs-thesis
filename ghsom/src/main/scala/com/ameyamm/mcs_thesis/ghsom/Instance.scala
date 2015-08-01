@@ -1,5 +1,7 @@
 package com.ameyamm.mcs_thesis.ghsom
 
+import scala.math.sqrt
+
 /**
  * @author ameya
  */
@@ -21,9 +23,15 @@ class Instance( private val _label : String, private val _attributeVector : Arra
   }
   
   def getDistanceFrom( other : Instance ) : Double = {
-    this.attributeVector.zip(other.attributeVector).map(t => t._1.getDistanceFrom(t._2)).reduce(_ + _)
+    sqrt(this.attributeVector.zip(other.attributeVector).map(t => t._1.getDistanceFrom(t._2)).reduce(_ + _))
   }
   
+}
+
+object InstanceFunctions {
+  def getAttributeVectorWithNeighbourhoodFactor(instance : Instance, factor : Double) : Array[DimensionType] = {
+    instance.attributeVector.map { attrib => attrib * factor }  
+  }
 }
 
 object Instance extends Serializable {

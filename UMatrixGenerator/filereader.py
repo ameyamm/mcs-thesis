@@ -10,8 +10,8 @@ import util
 import numpy as np
 
 from math import sqrt
+from math import ceil
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 
 def getSomLayerFromFile(filename):
     somLayer = list() # array of array of vectors
@@ -111,28 +111,76 @@ def umatrixImage(filename, somMatrix, umatrix, maxVector, minVector):
     
     numberOfAttributes = maxVector.size
     
-    plt.figure(1)
-    plt.subplot(2, numberOfAttributes, int(numberOfAttributes/2))
-    plt.imshow(umatrix, cmap = plt.get_cmap('Greys'))
+    plt.figure(1, figsize=(8, 6), dpi=80)
+    #plt.subplot(2, numberOfAttributes, int(numberOfAttributes/2))
+    plt.imshow(umatrix, aspect = 'auto', interpolation='bicubic')
     plt.colorbar( orientation='horizontal' )
+    fig = plt.gcf()
+    fig.savefig("umatrix.png")
     
-    for i in range(numberOfAttributes):
+    plt.figure(2, figsize=(8, 6), dpi=80)
+
+    cols = 2
+    rows = int(ceil(float(numberOfAttributes)/float(cols))) 
+
+    '''
+    fig, axes = plt.subplots(rows, cols)
+    
+    for i in range(numberOfAttributes) :
+        row = i/rows
+        col = i%cols
         somLayerForAttribute = np.copy(somMatrix[...,i])
         
-        print ("som For Attribute {}-{}:{}".format(i, maxVector[i], minVector[i]))
-        print somLayerForAttribute
         for elem in np.nditer(somLayerForAttribute, op_flags = ['readwrite']):
             elem[...] = (elem * (maxVector[i] - minVector[i])) + minVector[i]
         
-        plt.subplot(2, numberOfAttributes, numberOfAttributes + i + 1)
-        plt.imshow(somLayerForAttribute)
-        plt.colorbar( orientation='horizontal')
+        
+        img = axes[row,col].imshow(somLayerForAttribute, aspect = 'auto', interpolation= 'bicubic')
+        axes[row,col].set_title('attrib' + str(i))
+        cbar = plt.colorbar(img)
+        m0=int(np.floor(minVector[i]))            # colorbar min value
+        m4=int(np.ceil(maxVector[i]))             # colorbar max value
+        m1=int(1*(m4-m0)/4.0 + m0)               # colorbar mid value 1
+        m2=int(2*(m4-m0)/4.0 + m0)               # colorbar mid value 2
+        m3=int(3*(m4-m0)/4.0 + m0)               # colorbar mid value 3
+        cbar.update_ticks()
+        cbar.set_ticks([m0,m1,m2,m3,m4])
+        cbar.set_ticklabels([m0,m1,m2,m3,m4])
     
+    plt.tight_layout() 
+    fig = plt.gcf()
+    fig.savefig("componentPlanes.png")
+    '''
+        
+    for i in range(numberOfAttributes):
+        somLayerForAttribute = np.copy(somMatrix[...,i])
+        
+        #print ("som For Attribute {}-{}:{}".format(i, maxVector[i], minVector[i]))
+        #print somLayerForAttribute
+        for elem in np.nditer(somLayerForAttribute, op_flags = ['readwrite']):
+            elem[...] = (elem * (maxVector[i] - minVector[i])) + minVector[i]
+        
+        
+        plt.subplot(rows, cols, i + 1)
+        component = plt.imshow(somLayerForAttribute, aspect = 'auto', interpolation= 'bicubic')
+        m0=int(np.floor(minVector[i]))            # colorbar min value
+        m4=int(np.ceil(maxVector[i]))             # colorbar max value
+        m1=int(1*(m4-m0)/4.0 + m0)               # colorbar mid value 1
+        m2=int(2*(m4-m0)/4.0 + m0)               # colorbar mid value 2
+        m3=int(3*(m4-m0)/4.0 + m0)               # colorbar mid value 3
+        colorBar = plt.colorbar(component)#, ticks = [m0,m1,m2,m3,m4])
+        '''
+        colorBar.set_ticks([m0,m1,m2,m3,m4])
+        colorBar.set_ticklabels([m0,m1,m2,m3,m4])
+        colorBar.update_ticks()
+        '''
     #image = Image.fromarray(np.array(umatrix), mode = 'RGB')
     #image.save(filename + ".jpeg")
     
     #plt.colorbar()
-    plt.show()
+    #plt.show()
+    fig = plt.gcf()
+    fig.savefig("componentPlanes.png")
     
 def main(args):
     if (len(args) != 4):

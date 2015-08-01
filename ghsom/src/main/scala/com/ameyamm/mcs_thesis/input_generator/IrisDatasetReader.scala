@@ -39,7 +39,7 @@ class IrisDatasetReader (val dataset : RDD[String]) extends Serializable{
   
   def printDataset() {
     // println(datasetRDD.count)
-    println("AMU Dataset")
+    println("Dataset")
     println(datasetOfInstanceObjs.take(9).mkString("\n"))
   }
       
@@ -48,8 +48,6 @@ class IrisDatasetReader (val dataset : RDD[String]) extends Serializable{
     val irisDataset = convertToIrisRDD(dataset)
     
     val obj = irisDataset.first()
-    
-    println(">>>>>> " + obj.classValue + ":" + obj.petalLength)
     
     val attribMap : RDD[(String,DoubleDimension)] = 
       irisDataset.flatMap( 
@@ -158,9 +156,8 @@ object IrisDatasetReader {
     println(maxVector.mkString)
     */
     val dataset = sc.textFile("hdfs://192.168.101.13:9000/user/ameya/datasets/iris/iris.data")
-    println(dataset.first())
     val datasetReader = new IrisDatasetReader(dataset) 
-    datasetReader.printDataset()
+    //datasetReader.printDataset()
     val irisDataset = datasetReader.getDataset
     
     val ghsom = GHSom()
