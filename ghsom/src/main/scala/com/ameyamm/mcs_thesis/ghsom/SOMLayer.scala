@@ -21,10 +21,11 @@ import scala.compat.Platform
 class SOMLayer private (
   private val _layerID : Int, 
   private var _rowDim : Int, 
-  private var _colDim : Int, 
-  private val _parentNeuronID : String,
+  private var _colDim : Int,
+  private val _parentNeuron : Neuron,
+  //private val _parentNeuronID : String,
   private val _parentLayer : Int,
-  private val parentNeuronQE : Double, 
+  //private val parentNeuronQE : Double, 
   //private val parentNeuronMQE : Double,  // mqe_change
   attributeVectorSize : Int
 ) extends Serializable {
@@ -53,6 +54,12 @@ class SOMLayer private (
   }
 
   def totalNeurons : Long = _rowDim * _colDim
+  
+  def rowDim : Int = _rowDim
+  
+  def colDim : Int = _colDim
+  
+  def getNeuron(row : Int, col : Int) : Neuron = { this.neurons(row)(col) }
 
   private case class NeuronPair ( var neuron1 : Neuron, var neuron2 : Neuron ) {
 
@@ -114,7 +121,7 @@ class SOMLayer private (
       ";parent Layer : " + 
       this.parentLayer + 
       ";parent Neuron" +
-      this._parentNeuronID)
+      this._parentNeuron.id)
     println("Layer:")
     neurons.foreach( neuronRow => neuronRow.foreach(neuron => println(neuron))) 
   }
@@ -151,7 +158,7 @@ class SOMLayer private (
 
         val temp = neurons.flatten
         temp.map { neuron => 
-          val neighbourhoodFactor = neuron.computeNeighbourhoodFactor(bmu, iteration, maxIterations, radius)
+          val neighbourhoodFactor = neuron.getNeighbourhoodFactor(bmu, iteration, maxIterations, radius)
           (
             neuron.id, 
             (
@@ -254,10 +261,10 @@ class SOMLayer private (
     println("Criterion : ")
     //println("sum_qe_m / mappedNeuronsCnt : " + sum_mqe_m + "/" + mappedNeuronsCnt + "=" + MQE_m) //mqe_change
     println("sum_qe_m / mappedNeuronsCnt : " + sum_qe_m + "/" + mappedNeuronsCnt + "=" + MQE_m)
-    println("tau1 x parentNeuronQE : " + tau1 + "x" + this.parentNeuronQE + "=" + tau1 * this.parentNeuronQE)
+    println("tau1 x parentNeuronQE : " + tau1 + "x" + this._parentNeuron.qe + "=" + tau1 * this._parentNeuron.qe)
     //println("tau1 x parentNeuronMQE : " + tau1 + "x" + this.parentNeuronMQE) //mqe_change
 
-    if (MQE_m > tau1 * this.parentNeuronQE) {  
+    if (MQE_m > tau1 * this._parentNeuron.qe) {  
       (true, MQE_m , maxQeNeuron)
     }
     else {
@@ -291,7 +298,7 @@ class SOMLayer private (
    */
   def growMultipleCells(tau1 : Double) {
     //var neuronPairSet = getNeuronAndNeighbourSetForGrowing(tau1 * parentNeuronMQE)// mqe_change
-    var neuronPairSet = getNeuronAndNeighbourSetForGrowing(tau1 * parentNeuronQE)
+    var neuronPairSet = getNeuronAndNeighbourSetForGrowing(tau1 * this._parentNeuron.qe)
 
     for (pair <- neuronPairSet) {
       println("Neurons to Expand")  
@@ -311,6 +318,7 @@ class SOMLayer private (
             if (neuron.mappedInstanceCount > GHSomConfig.HIERARCHICAL_COUNT_FACTOR * instanceCount &&
               neuron.qe > criterion /* mqe_change neuron.mqe > tau2 * parentNeuronMQE */) { 
                 neuronSet += neuron
+                neuron.childLayerWeightVectors = getWeightVectorsForChildLayer(neuron)
               }
         } 
     }
@@ -360,6 +368,17 @@ class SOMLayer private (
       origDataset
   }
 
+  def initializeLayerWithParentNeuronWeightVectors {
+    if (this.rowDim != 2 || this.colDim != 2)
+      return
+      
+    for (i <- 0 until this.rowDim) {
+      for (j <- 0 until this.colDim) {
+        neurons(i)(j).neuronInstance = Instance(neurons(i)(j).neuronInstance.label, this._parentNeuron.childLayerWeightVectors(i * colDim + j))
+      }
+    }
+  }
+  
   def dumpToFile {
 
     val strNeurons = 
@@ -370,7 +389,7 @@ class SOMLayer private (
              )
              .mkString("\n")
 
-      val filename = "SOMLayer_CodebookVectors" + this.layerID + "_" + this._parentLayer + "_" + this._parentNeuronID + ".data"
+      val filename = "SOMLayer_CodebookVectors" + this.layerID + "_" + this._parentLayer + "_" + this._parentNeuron.id + ".data"
 
       val encoding : String = null
 
@@ -383,7 +402,7 @@ class SOMLayer private (
                    )
                    .mkString("\n")
 
-      val mappedInstanceFileName = "SOMLayer_MappedInstance_" + this.layerID + "_" + this._parentLayer + "_" + this._parentNeuronID + ".data"
+      val mappedInstanceFileName = "SOMLayer_MappedInstance_" + this.layerID + "_" + this._parentLayer + "_" + this._parentNeuron.id + ".data"
 
       FileUtils.writeStringToFile(new File(mappedInstanceFileName), mappedInstances, encoding)
               
@@ -393,7 +412,9 @@ class SOMLayer private (
             )
             .mkString("\n")
 
-      val mappedInstanceLabelsFileName = "SOMLayer_MappedInstanceLabels_" + this.layerID + "_" + this._parentLayer + "_" + this._parentNeuronID + ".data"
+      val mappedInstanceLabelsFileName = "SOMLayer_MappedInstanceLabels_" + 
+                                          this.layerID + "_" + 
+                                          this._parentLayer + "_" + this._parentNeuron.id + ".data"
 
       FileUtils.writeStringToFile(new File(mappedInstanceLabelsFileName), mappedInstanceLabels, encoding)
   }
@@ -430,7 +451,6 @@ class SOMLayer private (
       neurons(neuronRow)(neuronCol).clearMappedInputs()
 
   }
-
 
   private def getNeuronAndNeighbourSetForGrowing(
     criterion : Double
@@ -672,9 +692,6 @@ class SOMLayer private (
       rowColTuple
     }
 
-
-
-
     private def getRowAddedLayer(neuronPair : NeuronPair) : Array[Array[Neuron]] = {
       var newNeurons = Array.ofDim[Neuron](_rowDim + 1, _colDim) // add a row
 
@@ -764,9 +781,101 @@ class SOMLayer private (
       neighbours
     }
 
+    private def getWeightVectorsForChildLayer(neuron : Neuron) : Array[Array[DimensionType]]  = {
+      
+      var instanceTop : Instance = null
+      var instanceLeft : Instance = null
+      var instanceRight : Instance = null
+      var instanceBottom : Instance = null
+      
+      if (neuron.row == 0 && neuron.column == 0) {
+        // top-left
+        
+        // param neuron is neuron[0,0]
+        // surrounded by neuron[0,1], neuron[1,0], 
+        // output neuron[-1,-1], neuorn[-1,0], neuron[0,-1], neuron[0,0]
+        
+        instanceTop = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row + 1,neuron.column).neuronInstance)
+        instanceLeft = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row,neuron.column + 1).neuronInstance)
+        instanceRight = this.getNeuron(neuron.row,neuron.column + 1).neuronInstance
+        instanceBottom = this.getNeuron(neuron.row + 1,neuron.column).neuronInstance
+      }
+      
+      else if (neuron.row == 0 && neuron.column == this.colDim - 1) {
+        // top-right
+        instanceTop = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row + 1,neuron.column).neuronInstance)
+        instanceLeft = this.getNeuron(neuron.row, neuron.column - 1).neuronInstance
+        instanceRight = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row, neuron.column - 1).neuronInstance)
+        instanceBottom = this.getNeuron(neuron.row + 1, neuron.column).neuronInstance
+      }
+      else if (neuron.row == this.rowDim - 1 && neuron.column == 0) {
+        // bottom left
+        instanceTop = this.getNeuron(neuron.row - 1, neuron.column).neuronInstance
+        instanceLeft = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row, neuron.column + 1).neuronInstance)
+        instanceRight = this.getNeuron(neuron.row, neuron.column + 1).neuronInstance
+        instanceBottom = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row - 1, neuron.column).neuronInstance)
+      }
+      else if (neuron.row == this.rowDim - 1 && neuron.column == this.colDim - 1) {
+        // bottom right
+        instanceTop = this.getNeuron(neuron.row - 1, neuron.column).neuronInstance
+        instanceLeft = this.getNeuron(neuron.row, neuron.column - 1).neuronInstance
+        instanceRight = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row, neuron.column - 1).neuronInstance)
+        instanceBottom = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row - 1, neuron.column).neuronInstance)
+      }
+      else if (neuron.row == 0) {
+        // top row
+        instanceTop = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row + 1, neuron.column).neuronInstance)
+        instanceLeft = this.getNeuron(neuron.row, neuron.column - 1).neuronInstance
+        instanceRight = this.getNeuron(neuron.row, neuron.column + 1).neuronInstance
+        instanceBottom = this.getNeuron(neuron.row + 1, neuron.column).neuronInstance
+      }
+      else if (neuron.column == 0) {
+        // left column
+        instanceTop = this.getNeuron(neuron.row - 1, neuron.column).neuronInstance
+        instanceLeft = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row, neuron.column + 1).neuronInstance)
+        instanceRight = this.getNeuron(neuron.row, neuron.column + 1).neuronInstance
+        instanceBottom = this.getNeuron(neuron.row + 1, neuron.column).neuronInstance
+      }
+      else if (neuron.row == this.rowDim - 1) {
+        // bottom row
+        instanceTop = this.getNeuron(neuron.row - 1, neuron.column).neuronInstance
+        instanceLeft = this.getNeuron(neuron.row, neuron.column - 1).neuronInstance
+        instanceRight = this.getNeuron(neuron.row, neuron.column + 1).neuronInstance
+        instanceBottom = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row - 1, neuron.column).neuronInstance)
+      }
+      else if (neuron.column == this.colDim - 1) {
+        // right column
+        instanceTop = this.getNeuron(neuron.row - 1, neuron.column).neuronInstance
+        instanceLeft = this.getNeuron(neuron.row, neuron.column - 1).neuronInstance
+        instanceRight = neuron.neuronInstance + (neuron.neuronInstance - this.getNeuron(neuron.row, neuron.column - 1).neuronInstance)
+        instanceBottom = this.getNeuron(neuron.row + 1, neuron.column).neuronInstance
+      }
+      else {
+        // middle cells
+        instanceTop = this.getNeuron(neuron.row - 1, neuron.column).neuronInstance
+        instanceLeft = this.getNeuron(neuron.row, neuron.column - 1).neuronInstance
+        instanceRight = this.getNeuron(neuron.row, neuron.column + 1).neuronInstance
+        instanceBottom = this.getNeuron(neuron.row + 1, neuron.column).neuronInstance
+      }
+      
+      val weightVector00 = InstanceFunctions.getAverageInstance(neuron.neuronInstance, 
+                                                                  instanceTop, 
+                                                                  instanceLeft).attributeVector
+      val weightVector01 = InstanceFunctions.getAverageInstance(neuron.neuronInstance, 
+                                                                  instanceTop,
+                                                                  instanceRight).attributeVector
+      val weightVector10 = InstanceFunctions.getAverageInstance(neuron.neuronInstance, 
+                                                                  instanceLeft, 
+                                                                  instanceBottom).attributeVector                                                        
+      val weightVector11 = InstanceFunctions.getAverageInstance(neuron.neuronInstance, 
+                                                                  instanceRight, 
+                                                                  instanceBottom).attributeVector
+                                                                  
+      Array(weightVector00, weightVector01, weightVector10, weightVector11)
     }
+}
 
-    object SOMLayerFunctions {
+object SOMLayerFunctions {
       def findBMU(neurons : Array[Array[Neuron]], instance : Instance) : Neuron = {
         var bmu : Neuron = neurons(0)(0)
 
@@ -849,15 +958,15 @@ class SOMLayer private (
         }
     }
 
-    object SOMLayer {
+object SOMLayer {
 
       private var layerId = 0
 
       //def apply(parentNeuronID : String, parentLayer : Int, rowDim : Int, colDim : Int, parentNeuronMQE /*mqe_change*/ : Double, vectorSize : Int) = {
-      def apply(parentNeuronID : String, parentLayer : Int, rowDim : Int, colDim : Int, parentNeuronQE : Double, vectorSize : Int) = {
+      def apply(parentNeuron : Neuron, parentLayer : Int, rowDim : Int, colDim : Int, vectorSize : Int) = {
         layerId += 1
         //new SOMLayer(layerId, rowDim, colDim, parentNeuronID, parentLayer, parentNeuronMQE /*mqe_change*/ , vectorSize )
-        new SOMLayer(layerId, rowDim, colDim, parentNeuronID, parentLayer, parentNeuronQE, vectorSize )
+        new SOMLayer(layerId, rowDim, colDim, parentNeuron, /*parentNeuronID, */ parentLayer, /*parentNeuronQE,*/ vectorSize )
       }
 
       def main(args : Array[String]) {

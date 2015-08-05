@@ -50,23 +50,23 @@ class GHSom() extends Serializable {
      
      // layer and neuron is the pared layer and neuron
      //case class LayerNeuron(parentLayer : Int, parentNeuronID : String, parentNeuronMQE : Double) { // mqe_change
-     case class LayerNeuron(parentLayer : Int, parentNeuronID : String, parentNeuronQE : Double) {
+     case class LayerNeuron(parentLayer : Int, parentNeuron : Neuron) {
        override def equals( obj : Any ) : Boolean = {
          obj match {
           case o : LayerNeuron => {
-            (this.parentLayer.equals(o.parentLayer) && this.parentNeuronID.equals(o.parentNeuronID)) 
+            (this.parentLayer.equals(o.parentLayer) && this.parentNeuron.id.equals(o.parentNeuron.id)) 
           }
           case _ => false 
          }
        }
   
-       override def hashCode : Int = parentLayer.hashCode() + parentNeuronID.hashCode()
+       override def hashCode : Int = parentLayer.hashCode() + parentNeuron.id.hashCode()
      }
      
      val layerQueue = new mutable.Queue[LayerNeuron]()
      
      //layerQueue.enqueue(LayerNeuron(layer, layer0Neuron.id, mqe0)) //mqe_change
-     layerQueue.enqueue(LayerNeuron(layer, layer0Neuron.id, qe0))
+     layerQueue.enqueue(LayerNeuron(layer, layer0Neuron))
      
      var hierarchicalGrowth = true 
      
@@ -76,12 +76,12 @@ class GHSom() extends Serializable {
        
        val currentLayerNeuron = layerQueue.dequeue
        
-       println("Processing for parentLayer :" + currentLayerNeuron.parentLayer + ", parent neuron : " + currentLayerNeuron.parentNeuronID)
+       println("Processing for parentLayer :" + currentLayerNeuron.parentLayer + ", parent neuron : " + currentLayerNeuron.parentNeuron.id)
        // make dataset for this layer
 
        val currentDataset = layerNeuronRDD.filter( obj => 
                                                      obj._1.equals(currentLayerNeuron.parentLayer) && 
-                                                     obj._2.equals(currentLayerNeuron.parentNeuronID)
+                                                     obj._2.equals(currentLayerNeuron.parentNeuron.id)
                                            )
                                            .map(obj => obj._3)
                                            
@@ -96,11 +96,14 @@ class GHSom() extends Serializable {
        val currentLayer = SOMLayer(
                        rowDim = GHSomConfig.INIT_LAYER_SIZE, 
                        colDim = GHSomConfig.INIT_LAYER_SIZE,
-                       parentNeuronID = currentLayerNeuron.parentNeuronID, 
+                       parentNeuron = currentLayerNeuron.parentNeuron,
                        parentLayer = currentLayerNeuron.parentLayer, 
-                       parentNeuronQE = currentLayerNeuron.parentNeuronQE,
-                       //parentNeuronMQE = currentLayerNeuron.parentNeuronMQE, //mqe_change
                        vectorSize = attribVectorSize)
+                       
+       if (currentLayerNeuron.parentLayer != 0) {
+         println("Initializing")
+         currentLayer.initializeLayerWithParentNeuronWeightVectors
+       }
      
        var epochs = GHSomConfig.EPOCHS
        var prevMQE_m = 0.0
@@ -172,18 +175,19 @@ class GHSom() extends Serializable {
        // check for mqe_i > TAU2 x mqe_parentNeuron
          
        //val neuronsToExpand : mutable.Set[Neuron] = currentLayer.getNeuronsForHierarchicalExpansion(mqe0 * GHSomConfig.TAU2, totalInstances) // mqe_change
+       println("Hierarchical criterion: " + GHSomConfig.TAU2 + "x" + qe0 + "=" + (qe0 * GHSomConfig.TAU2))
        val neuronsToExpand : mutable.Set[Neuron] = currentLayer.getNeuronsForHierarchicalExpansion(qe0 * GHSomConfig.TAU2, totalInstances)
        
        neuronsToExpand.foreach { neuron =>  
          //println("Expand neuron: " + currentLayer.layerID + " : " + neuron.id + " : " + neuron.mqe) 
          println("Expand neuron: " + currentLayer.layerID + " : " + neuron.id + " : " + neuron.qe) 
          //layerQueue.enqueue(LayerNeuron(currentLayer.layerID, neuron.id, neuron.mqe)) // mqe_change
-         layerQueue.enqueue(LayerNeuron(currentLayer.layerID, neuron.id, neuron.qe))
+         layerQueue.enqueue(LayerNeuron(currentLayer.layerID, neuron))
        }
        
        layerNeuronRDD = currentLayer.populateRDDForHierarchicalExpansion(layerNeuronRDD, currentDataset, neuronsToExpand)
        layerNeuronRDD = layerNeuronRDD.filter( tup => !(tup._1.equals(currentLayerNeuron.parentLayer) &&  
-                                                       tup._2.equals(currentLayerNeuron.parentNeuronID))
+                                                       tup._2.equals(currentLayerNeuron.parentNeuron.id))
                                              )
        println("layerNeuronRDD Count : " + layerNeuronRDD.count)
        currentLayer.dumpToFile

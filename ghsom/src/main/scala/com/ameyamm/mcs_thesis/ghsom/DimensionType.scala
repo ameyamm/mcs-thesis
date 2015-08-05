@@ -18,4 +18,5 @@ trait DimensionType extends Serializable with Ordered[DimensionType] {
   def /(num : Long) : DimensionType
   def /(num : Double) : DimensionType
   def *(num : Double) : DimensionType
+  def cloneMe : DimensionType 
 }

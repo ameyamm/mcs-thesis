@@ -21,9 +21,11 @@ class Neuron (
   
   private var _mappedInstanceCount : Long = 0
   
-  private var _mappedInstanceLabels : scala.collection.Set[String] = null
+  private var _mappedInstanceLabels : scala.collection.Set[String] = scala.collection.Set[String]()
   
   private var _id : String = _row.toString() + "," + _column.toString() 
+  
+  private var _childLayerWeightVectors : Array[Array[DimensionType]] = Array.tabulate(4)(i => null)
   
   /* Getters and setters */
   def row : Int = _row 
@@ -55,6 +57,11 @@ class Neuron (
   def mappedInstanceLabels : scala.collection.Set[String] = _mappedInstanceLabels
 
   def mappedInstanceLabels_= (set : scala.collection.Set[String]): Unit = _mappedInstanceLabels = set
+  
+  def childLayerWeightVectors : Array[Array[DimensionType]] = _childLayerWeightVectors
+  
+  def childLayerWeightVectors_= (value : Array[Array[DimensionType]]) : Unit = {_childLayerWeightVectors = value}
+  
   def updateRowCol(i : Int, j : Int) : Unit = { 
     _row = i ; 
     _column = j; 
@@ -77,7 +84,7 @@ class Neuron (
     _mappedInputs.clear()
   }
   
-  def computeNeighbourhoodFactor(neuron : Neuron, iteration : Long, maxIterations : Long, radius : Int) : Double = {
+  def getNeighbourhoodFactor(neuron : Neuron, iteration : Long, maxIterations : Long, radius : Int) : Double = {
     
     /*
      * Neighbourhood factor = exp ( - (dist between neurons) / 2 x sigma(iteration)^2
@@ -86,7 +93,7 @@ class Neuron (
      */
     val sigma = radius * (exp(( -1 * iteration) / (maxIterations / log(radius))))
     
-    exp(-1 * (pow(abs(this.row - neuron.row) + abs(this.column - neuron.column),2)/(pow(sigma,2))))    
+    exp(-1 * (pow(abs(this.row - neuron.row) + abs(this.column - neuron.column),2)/(2*(pow(sigma,2)))))    
     //exp(-(abs(this.row - neuron.row) + abs(this.column - neuron.column)) / iteration)
   }
   

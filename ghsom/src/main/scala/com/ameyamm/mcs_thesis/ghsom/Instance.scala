@@ -17,7 +17,7 @@ class Instance( private val _label : String, private val _attributeVector : Arra
   }
   
   def +(that : Instance) : Instance = {
-    new Instance( this.label + "," + that.label, 
+    new Instance( this.label + "+" + that.label, 
                   this.attributeVector.zip(that.attributeVector).map( t => t._1 + t._2 )               
         )
   }
@@ -26,11 +26,38 @@ class Instance( private val _label : String, private val _attributeVector : Arra
     sqrt(this.attributeVector.zip(other.attributeVector).map(t => t._1.getDistanceFrom(t._2)).reduce(_ + _))
   }
   
+  def -(that : Instance) : Instance = {
+    new Instance (this.label + "-" + that.label,
+                  this.attributeVector.zip(that.attributeVector).map(t => t._1 - t._2))
+  }
+  
 }
 
 object InstanceFunctions {
   def getAttributeVectorWithNeighbourhoodFactor(instance : Instance, factor : Double) : Array[DimensionType] = {
     instance.attributeVector.map { attrib => attrib * factor }  
+  }
+  
+  def getAverageInstance(instances : Instance*) : Instance = {
+    
+    var avgAttributeVector : Array[DimensionType] = instances(0).attributeVector.map(elem => elem.cloneMe)
+    
+    var skippedFirst = false
+    
+    for (instance <- instances) {
+      if (!skippedFirst)
+        skippedFirst = true 
+      else {
+        avgAttributeVector = avgAttributeVector.zip(instance.attributeVector).map(t => t._1 + t._2)
+      }
+    } 
+    
+    avgAttributeVector = avgAttributeVector.map(elem => elem / instances.size)
+    
+    new Instance( 
+        "average instance",
+        avgAttributeVector
+        )
   }
 }
 

@@ -89,6 +89,10 @@ class DoubleDimension(_value : Double) extends Dimension[Double](_value) {
       case _ => throw new IllegalClassException("Illegal class in DoubleDimension")
     }
   }
+  
+  override def cloneMe : DimensionType = {
+    new DoubleDimension(this.value)
+  }
 }
 
 object DoubleDimension {
