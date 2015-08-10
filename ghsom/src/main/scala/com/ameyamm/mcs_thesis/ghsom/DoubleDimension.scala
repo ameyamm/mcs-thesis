@@ -1,8 +1,8 @@
 package com.ameyamm.mcs_thesis.ghsom
 
-import scala.util.Random
+import scala.util.Random 
 import org.apache.commons.lang.IllegalClassException
-import scala.math.sqrt
+import scala.math.{sqrt,abs}
 import scala.compat.Platform
 
 /**
@@ -68,6 +68,48 @@ class DoubleDimension(_value : Double) extends Dimension[Double](_value) {
     DoubleDimension(this.value / num)
   } 
   
+  override def !=( that : DimensionType ) : Boolean = {
+    that match {
+      case d : DoubleDimension => this.value != d.value
+      case _ => false
+    }
+  }
+  
+  override def ==( that : DimensionType ) : Boolean = {
+    that match {
+      case d : DoubleDimension => this.value == d.value
+      case _ => false
+    }
+  }
+  
+  override def <( that : DimensionType ) : Boolean = {
+    that match {
+      case d : DoubleDimension => this.value < d.value
+      case _ => false
+    }
+  }
+  
+  override def <=( that : DimensionType ) : Boolean = {
+    that match {
+      case d : DoubleDimension => this.value <= d.value
+      case _ => false
+    }
+  }
+  
+  override def >=( that : DimensionType ) : Boolean = {
+    that match {
+      case d : DoubleDimension => this.value >= d.value
+      case _ => false
+    }
+  }
+  
+  override def >( that : DimensionType ) : Boolean = {
+    that match {
+      case d : DoubleDimension => this.value > d.value
+      case _ => false
+    }
+  }
+  
   override def toString : String = {
     this.value.toString
   }
@@ -79,10 +121,17 @@ class DoubleDimension(_value : Double) extends Dimension[Double](_value) {
     }
   }
   
+  override def * (that : DimensionType) : DimensionType = {
+    that match {
+      case d : DoubleDimension => new DoubleDimension(this.value * d.value)
+      case _ => throw new IllegalClassException("Illegal class in DoubleDimension")
+    }
+  }
+  
   override def * (multFactor : Double) : DimensionType = {
     new DoubleDimension(this.value * multFactor)
   }
-
+  
   override def getDistanceFrom(that : DimensionType) : Double = {
     that match {
       case d : DoubleDimension => (this.value - d.value) * (this.value - d.value)
@@ -90,8 +139,20 @@ class DoubleDimension(_value : Double) extends Dimension[Double](_value) {
     }
   }
   
+  override def getAbs : DimensionType = {
+    new DoubleDimension(abs(this.value))
+  }
+  
   override def cloneMe : DimensionType = {
     new DoubleDimension(this.value)
+  }
+  
+  override def isZero : Boolean = {
+    this.value == 0
+  }
+  
+  override def getValue : Double = {
+    this.value
   }
 }
 

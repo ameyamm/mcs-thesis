@@ -21,7 +21,7 @@ class Neuron (
   
   private var _mappedInstanceCount : Long = 0
   
-  private var _mappedInstanceLabels : scala.collection.Set[String] = scala.collection.Set[String]()
+  
   
   private var _id : String = _row.toString() + "," + _column.toString() 
   
@@ -54,13 +54,22 @@ class Neuron (
 
   def mappedInstanceCount_= (value : Long): Unit = _mappedInstanceCount = value
   
-  def mappedInstanceLabels : scala.collection.Set[String] = _mappedInstanceLabels
-
-  def mappedInstanceLabels_= (set : scala.collection.Set[String]): Unit = _mappedInstanceLabels = set
-  
+    
   def childLayerWeightVectors : Array[Array[DimensionType]] = _childLayerWeightVectors
   
   def childLayerWeightVectors_= (value : Array[Array[DimensionType]]) : Unit = {_childLayerWeightVectors = value}
+  
+  /* For Label SOM */
+  private var _labels = scala.collection.Set[Label]()
+  def labels_=(labelSet : scala.collection.Set[Label]) : Unit = _labels = labelSet
+  def labels : scala.collection.Set[Label] = _labels
+  /* End for label SOM */
+  
+  /* Class labels */
+  private var _classLabels : scala.collection.Set[String] = scala.collection.Set[String]()
+  def classLabels : scala.collection.Set[String] = _classLabels
+  def classLabels_= (set : scala.collection.Set[String]): Unit = _classLabels = set
+  /* End of class labels */
   
   def updateRowCol(i : Int, j : Int) : Unit = { 
     _row = i ; 

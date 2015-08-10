@@ -144,7 +144,8 @@ class SOMLayer private (
 
     var iteration = 0
 
-    val radius = ceil(sqrt(pow(this._rowDim, 2) + pow(this._colDim,2))).asInstanceOf[Int] //max(this._rowDim, this._colDim)
+    val radius = (ceil(sqrt(pow(this._rowDim, 2) + pow(this._colDim,2))).asInstanceOf[Int] / 2)  //max(this._rowDim, this._colDim)
+    //val radius = min(this._rowDim, this._colDim)
     
     while( iteration < maxIterations ) {
       //println("Sigma = " + (radius * (exp(( -1 * iteration) / (maxIterations / log(radius)))))) 
@@ -196,21 +197,26 @@ class SOMLayer private (
     }
   }
 
-  def computeMQE_m(dataset : RDD[Instance]) {
+  /**
+   * Computes the statistics for the layer such as 
+   *  - number of mapped instances
+   *  - mqe
+   *  - qe
+   */
+  def computeStatsForLayer(dataset : RDD[Instance]) {
 
     val neurons = this.neurons
 
     /***** MapReduce Begins *****/
     // runs on workers 
     // creates a map of (neuron id -> (quantization error, instance count = 1)) 
-    //val neuronsQE = new PairRDDFunctions[String, (Double, Long)]( 
-    val neuronsQE = new PairRDDFunctions[String, (Double, Long, Set[String])]( // label_map
+    
+    val neuronsQE = new PairRDDFunctions[String, (Double, Long)]( 
+    //val neuronsQE = new PairRDDFunctions[String, (Double, Long, Set[String])]( // classlabel_map
       dataset.map { instance => 
         val bmu = SOMLayerFunctions.findBMU(neurons, instance)
-
         val qe = bmu.neuronInstance.getDistanceFrom(instance)
-        //(bmu.id,(qe,1L))
-        (bmu.id,(qe,1L,Set(instance.label))) // label_map
+        (bmu.id,(qe,1L))
       }
     )
 
@@ -379,10 +385,71 @@ class SOMLayer private (
     }
   }
   
-  def dumpToFile {
+  def computeLabels(dataset : RDD[Instance], headers : Array[String]) {
+    
+    var attributeHeaders = headers 
+    
+    if (attributeHeaders == null) {
+      attributeHeaders = Array.tabulate(this.attributeVectorSize)(index => index.toString())
+    }
+    
+    val neurons = this.neurons
 
-    val strNeurons = 
-      neurons.map(row => {
+    /***** MapReduce Begins *****/
+    // runs on workers 
+    // creates a map of (neuron id -> (sum of instances,  instance count = 1)) 
+    
+    val neuronLabels = new PairRDDFunctions[String, (Instance, Instance, Long)]( 
+      dataset.map { instance => 
+        val bmu = SOMLayerFunctions.findBMU(neurons, instance)
+        val sumInstance = Instance("sumInstance_", instance.attributeVector)
+        val qeInstance = InstanceFunctions.getQEInstance(bmu.neuronInstance, instance)
+        (bmu.id,(sumInstance, qeInstance, 1))
+      }
+    )
+    
+    // combines / reduces (adds) all quantization errors and instance counts from each mapper
+    val neuronMeanNQEs = neuronLabels.reduceByKey(SOMLayerFunctions.combineNeuronsMeanAndQEForLabels)
+                                 .mapValues(SOMLayerFunctions.computeMeanAndQEForLabels)
+
+    val neuronUpdatesMap = neuronMeanNQEs.collectAsMap
+    
+    val neuronLabelMap = neuronUpdatesMap.mapValues( tup => getNeuronLabelSet(tup._1, tup._2, attributeHeaders) )
+    
+    neuronLabelMap.map(updateNeuronLabels) // return to driver
+              
+    /***** MapReduce Ends *****/
+  }
+  
+  def computeClassLabels(dataset : RDD[Instance]) {
+
+    val neurons = this.neurons
+
+    /***** MapReduce Begins *****/
+    // runs on workers 
+    // creates a map of (neuron id -> (quantization error, instance count = 1)) 
+    
+    val neuronsClassLabels = new PairRDDFunctions[String, Set[String]]( 
+      dataset.map { instance => 
+        val bmu = SOMLayerFunctions.findBMU(neurons, instance)
+        (bmu.id,Set(instance.label)) // classlabel_map
+      }
+    )
+
+    // combines / reduces (adds) all quantization errors and instance counts from each mapper
+    val neuronMQEs = neuronsClassLabels.reduceByKey(SOMLayerFunctions.computeNeuronClassLabels)
+
+    neuronMQEs.collectAsMap
+              .map(updateNeuronClassLabels) // return to driver
+    /***** MapReduce Ends *****/
+  }
+
+  
+  def dumpToFile( attributes : Array[Attribute] ) {
+
+      /* Codebook vectors */
+      val strNeurons = 
+        neurons.map(row => {
                     row.map(neuron => neuron.neuronInstance.attributeVector.mkString(","))
                        .mkString("|")
                     }
@@ -395,6 +462,7 @@ class SOMLayer private (
 
       FileUtils.writeStringToFile(new File(filename), strNeurons, encoding)
 
+      /* Mapped Instance Count */
       val mappedInstances = 
         neurons.map(row => 
                        row.map(neuron => neuron.mappedInstanceCount.toString())
@@ -405,37 +473,66 @@ class SOMLayer private (
       val mappedInstanceFileName = "SOMLayer_MappedInstance_" + this.layerID + "_" + this._parentLayer + "_" + this._parentNeuron.id + ".data"
 
       FileUtils.writeStringToFile(new File(mappedInstanceFileName), mappedInstances, encoding)
-              
-      val mappedInstanceLabels = neurons.map(row => 
-          row.map(neuron => neuron.mappedInstanceLabels.mkString(","))
-            .mkString("|")
+      
+      /* Max Vector */
+      val maxfilename = "maxVector.data"
+      val maxVectorString = attributes.map(attribute => attribute.maxValue)
+                                      .mkString(",")
+      FileUtils.writeStringToFile(new File(maxfilename), maxVectorString, encoding)
+      
+      /* Min Vector */
+      val minfilename = "minVector.data"
+      val minVectorString = attributes.map(attribute => attribute.minValue)
+                                      .mkString(",")
+      FileUtils.writeStringToFile(new File(minfilename), minVectorString, encoding)
+      
+      if (GHSomConfig.CLASS_LABELS) {
+        val classLabels = neurons.map(row => 
+            row.map(neuron => neuron.classLabels.mkString(","))
+               .mkString("|")
             )
             .mkString("\n")
 
-      val mappedInstanceLabelsFileName = "SOMLayer_MappedInstanceLabels_" + 
+        val classLabelsFileName = "SOMLayer_ClassLabels_" + 
                                           this.layerID + "_" + 
                                           this._parentLayer + "_" + this._parentNeuron.id + ".data"
 
-      FileUtils.writeStringToFile(new File(mappedInstanceLabelsFileName), mappedInstanceLabels, encoding)
+        FileUtils.writeStringToFile(new File(classLabelsFileName), classLabels, encoding)
+      }
+    
+      if (GHSomConfig.LABEL_SOM) {
+        
+        // convert attribute array to a map of attribute name and min, max value
+        
+        val attributeMap = attributes.map ( attrib => (attrib.name, (attrib.minValue, attrib.maxValue) ) )
+                                     .toMap
+        
+        val mappedLabelsOfNeurons = neurons.map(row =>
+          row.map(neuron => 
+            neuron.labels.map( label => {
+                // find the label in attribute map and deduce its unnormalized value
+                val (minVal, maxVal) = attributeMap(label.name)
+                Label(label.name, ((label.value * (maxVal - minVal)) + minVal))
+              }
+            )
+          )
+        )
+                                     
+        val mappedLabels = mappedLabelsOfNeurons.map(row => 
+            row.map(labelSet => labelSet.mkString(","))
+               .mkString("|")
+            )
+            .mkString("\n")
+
+        val mappedLabelsFileName = "SOMLayer_Labels_" + 
+                                          this.layerID + "_" + 
+                                          this._parentLayer + "_" + this._parentNeuron.id + ".data"
+
+        FileUtils.writeStringToFile(new File(mappedLabelsFileName), mappedLabels, encoding)
+        
+      }
   }
 
-  private def updateNeuronMQEs(
-    tuple : (String, (Double, Double, Long, Set[String]))) : Unit = {
-
-      val neuronRowCol = tuple._1.split(",")
-
-      val (neuronRow, neuronCol) = (neuronRowCol(0).toInt, neuronRowCol(1).toInt)
-
-      //println("Neuron - " + tuple._1 + "; MQE : " + tuple._2._1 + ";mappedInstance Count : " + tuple._2._3) 
-
-      neurons(neuronRow)(neuronCol).mqe = tuple._2._1
-      neurons(neuronRow)(neuronCol).qe = tuple._2._2
-      neurons(neuronRow)(neuronCol).mappedInstanceCount = tuple._2._3
-      neurons(neuronRow)(neuronCol).mappedInstanceLabels = tuple._2._4
-      neurons(neuronRow)(neuronCol).clearMappedInputs()
-
-  }
-  
   private def updateNeuronMQEs(
     tuple : (String, (Double, Double, Long))) : Unit = {
 
@@ -449,9 +546,72 @@ class SOMLayer private (
       neurons(neuronRow)(neuronCol).qe = tuple._2._2
       neurons(neuronRow)(neuronCol).mappedInstanceCount = tuple._2._3
       neurons(neuronRow)(neuronCol).clearMappedInputs()
-
   }
 
+  private def getNeuronLabelSet(
+    meanInstance : Instance, 
+    qeInstance : Instance,
+    header : Array[String]
+  ) : scala.collection.Set[Label] = {
+    
+    /* 
+     * Reference from SOM Tool Box : http://www.ifs.tuwien.ac.at/dm/download/somtoolbox+src.tar.gz
+     */
+    val labelMeanVector = header.zip(meanInstance.attributeVector)
+                                .map(tup => new Label(name = tup._1, value = tup._2))
+                                .filter( label => label.value.getValue != 0 )
+                                .sortWith( _.value < _.value )
+    val labelQEVector = header.zip(qeInstance.attributeVector)
+                              .map(tup => new Label(name = tup._1, value = tup._2))
+                              .filter(label => label.value.getValue > 0.001)
+                              .sortWith(_.value < _.value)
+    
+    val numOfLabels = GHSomConfig.NUM_LABELS
+    
+    val labels = scala.collection.mutable.Set[Label]()
+    
+    var attributeIterator = 0 
+    
+    while( labels.size < numOfLabels && attributeIterator < labelQEVector.length) {
+      var labelFound = false 
+      var attributeIterator2 = 0
+      while( !labelFound && attributeIterator2 < labelMeanVector.length) {
+        if (labelMeanVector(attributeIterator2).equals(labelQEVector(attributeIterator))) {
+          labelFound = true
+          labels.add(labelQEVector(attributeIterator))
+        }
+        attributeIterator2 += 1
+      }
+      attributeIterator += 1
+    } 
+    
+    labels
+  }   
+  
+  private def updateNeuronLabels(
+       tuple : (String, Set[Label])
+  ) : Unit = {
+      val neuronRowCol = tuple._1.split(",")
+
+      val (neuronRow, neuronCol) = (neuronRowCol(0).toInt, neuronRowCol(1).toInt)
+
+      //println("Neuron - " + tuple._1 + "; MQE : " + tuple._2._1 + ";mappedInstance Count : " + tuple._2._3) 
+
+      neurons(neuronRow)(neuronCol).labels = tuple._2
+  }
+  
+  private def updateNeuronClassLabels(
+    tuple : (String, Set[String])
+  ) : Unit = {
+      val neuronRowCol = tuple._1.split(",")
+
+      val (neuronRow, neuronCol) = (neuronRowCol(0).toInt, neuronRowCol(1).toInt)
+
+      //println("Neuron - " + tuple._1 + "; MQE : " + tuple._2._1 + ";mappedInstance Count : " + tuple._2._3) 
+
+      neurons(neuronRow)(neuronCol).classLabels = tuple._2
+  }
+  
   private def getNeuronAndNeighbourSetForGrowing(
     criterion : Double
   ) : Set[NeuronPair] = {
@@ -910,17 +1070,6 @@ object SOMLayerFunctions {
         tup._1.map(t => t / tup._2)
       }
 
-      /* 
-       * label_som
-       * Input : (QE , Count, Set[String])
-       * Output : (QE_sum, Count_sum, Set[String] Union)
-       */
-      def combineNeuronsQE( t1: (Double, Long, Set[String]), 
-        t2: (Double, Long, Set[String]) 
-        ) : (Double, Long, Set[String]) = {
-          (t1._1 + t2._1, t1._2 + t2._2, t1._3.union(t2._3))
-        }
-
       /* Input : (QE , Count)
        * Output : (QE_sum, Count_sum)
        */
@@ -930,16 +1079,6 @@ object SOMLayerFunctions {
           (t1._1 + t2._1, t1._2 + t2._2)
         }
 
-        /**
-         * input : tuple of (qe, num_of_instances, Set[String])
-         * output : tuple of (mqe , qe, num_of_instances, Set[String])
-         */
-        def computeMQEForNeuron(
-          tup : (Double, Long, Set[String]) 
-        ) : (Double, Double, Long, Set[String]) = {
-          (tup._1/tup._2, tup._1, tup._2, tup._3)
-        }
-        
         /**
          * input : tuple of (qe, num_of_instances)
          * output : tuple of (mqe , qe, num_of_instances)
@@ -956,7 +1095,33 @@ object SOMLayerFunctions {
         ) : List[(Int, String, Instance)] = {
           tup1List ++ tup2List
         }
-    }
+        
+       /** 
+        * Input : (QE , Count)
+        * Output : (QE_sum, Count_sum)
+        */
+        def combineNeuronsMeanAndQEForLabels( t1: (Instance, Instance, Long), 
+        t2: (Instance, Instance, Long) 
+        ) : (Instance, Instance, Long) = {
+          (t1._1 + t2._1, t1._2 + t2._2, t1._3 + t1._3)
+        }
+      
+        /**
+         * input : tuple of (qe, num_of_instances)
+         * output : tuple of (mqe , qe, num_of_instances)
+         */
+        def computeMeanAndQEForLabels(
+          tup : (Instance, Instance, Long) 
+        ) : (Instance, Instance, Long) = {
+          (tup._1/tup._3, tup._2/tup._3, tup._3)
+        }
+        
+        def computeNeuronClassLabels(
+          labelSet1 : Set[String], labelSet2 : Set[String]    
+        ) : Set[String] = {
+          labelSet1.union(labelSet2)
+        }
+}
 
 object SOMLayer {
 

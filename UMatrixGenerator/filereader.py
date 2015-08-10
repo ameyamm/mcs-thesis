@@ -109,11 +109,28 @@ def umatrixImage(filename, somMatrix, umatrix, maxVector, minVector):
     
     #image = Image.fromarray(umatrixNumpy, mode='L')
     
+    (rowsUmatrix,colsUmatrix) = umatrix.shape
+    majorTicksY = np.arange(0, rowsUmatrix, 1)
+    #minorTicksY = np.arange(0, rowsSOM, 2)
+    majorTicksX = np.arange(0, colsUmatrix, 1)
+    #minorTicksX = np.arange(0, colsSOM, 2)
+    
     numberOfAttributes = maxVector.size
     
     plt.figure(1, figsize=(8, 6), dpi=80)
+    axes = plt.axes()
+
+    axes.set_xticks(majorTicksX + 1)
+    #axes.set_xticks(minorTicksX, minor = True)
+    axes.set_yticks(majorTicksY + 1)
+    #axes.set_yticks(minorTicksY, minor = True)
+
+    plt.grid(b=True, which='major', color='k', linestyle='-')
+    
+    # plt.grid(b=True, which='minor', color='k', linestyle='-')
     #plt.subplot(2, numberOfAttributes, int(numberOfAttributes/2))
-    plt.imshow(umatrix, aspect = 'auto', interpolation='bicubic')
+    plt.imshow(umatrix, aspect = 'equal', interpolation='bicubic', cmap = 'gray_r', origin = 'lower', 
+               extent = [0,colsUmatrix, 0, rowsUmatrix]) # pylab.gray())
     plt.colorbar( orientation='horizontal' )
     fig = plt.gcf()
     fig.savefig("umatrix.png")
@@ -122,6 +139,8 @@ def umatrixImage(filename, somMatrix, umatrix, maxVector, minVector):
 
     cols = 2
     rows = int(ceil(float(numberOfAttributes)/float(cols))) 
+    
+    
 
     '''
     fig, axes = plt.subplots(rows, cols)
@@ -155,19 +174,30 @@ def umatrixImage(filename, somMatrix, umatrix, maxVector, minVector):
     for i in range(numberOfAttributes):
         somLayerForAttribute = np.copy(somMatrix[...,i])
         
+        (rowsSOMMatrix,colsSOMMatrix) = somLayerForAttribute.shape
+        majorTicksY = np.arange(0, rowsSOMMatrix + 1, 1)
+    #minorTicksY = np.arange(0, rowsSOM, 2)
+        majorTicksX = np.arange(0, colsSOMMatrix + 1, 1)
+        
         #print ("som For Attribute {}-{}:{}".format(i, maxVector[i], minVector[i]))
         #print somLayerForAttribute
         for elem in np.nditer(somLayerForAttribute, op_flags = ['readwrite']):
             elem[...] = (elem * (maxVector[i] - minVector[i])) + minVector[i]
         
         
-        plt.subplot(rows, cols, i + 1)
-        component = plt.imshow(somLayerForAttribute, aspect = 'auto', interpolation= 'bicubic')
+        axes = plt.subplot(rows, cols, i + 1)
+        
+        axes.set_xticks(majorTicksX)
+        axes.set_yticks(majorTicksY)
+        
+        component = plt.imshow(somLayerForAttribute, aspect = 'auto', interpolation= 'bicubic',cmap = 'jet', 
+                               extent = [0, colsSOMMatrix, 0, rowsSOMMatrix ])
+        plt.grid(b=True, which='major', color='k', linestyle='-')
         m0=int(np.floor(minVector[i]))            # colorbar min value
         m4=int(np.ceil(maxVector[i]))             # colorbar max value
-        m1=int(1*(m4-m0)/4.0 + m0)               # colorbar mid value 1
-        m2=int(2*(m4-m0)/4.0 + m0)               # colorbar mid value 2
-        m3=int(3*(m4-m0)/4.0 + m0)               # colorbar mid value 3
+        m1=int(1*(m4-m0)/4.0 + m0)                # colorbar mid value 1
+        m2=int(2*(m4-m0)/4.0 + m0)                # colorbar mid value 2
+        m3=int(3*(m4-m0)/4.0 + m0)                # colorbar mid value 3
         colorBar = plt.colorbar(component)#, ticks = [m0,m1,m2,m3,m4])
         '''
         colorBar.set_ticks([m0,m1,m2,m3,m4])

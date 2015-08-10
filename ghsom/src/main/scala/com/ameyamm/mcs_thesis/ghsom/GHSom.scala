@@ -13,7 +13,7 @@ class GHSom() extends Serializable {
    
    //def dataset : RDD[Instance] = _dataset
    
-   def train(dataset : RDD[Instance]) {
+   def train(dataset : RDD[Instance], attributes : Array[Attribute] = null, epochsValue : Int = GHSomConfig.EPOCHS) {
      
      // Compute m0 - Mean of all the input
      
@@ -105,7 +105,7 @@ class GHSom() extends Serializable {
          currentLayer.initializeLayerWithParentNeuronWeightVectors
        }
      
-       var epochs = GHSomConfig.EPOCHS
+       var epochs = epochsValue
        var prevMQE_m = 0.0
        do {
            //var epochs = currentLayer.totalNeurons * 2
@@ -121,7 +121,7 @@ class GHSom() extends Serializable {
            
            // MapReduce : Uses driver and workers, updating the neurons at the driver
            // computes the layer's MQE_m and updates the mqe for individual neurons in the layer
-           currentLayer.computeMQE_m(currentDataset)
+           currentLayer.computeStatsForLayer(currentDataset)
            
            println("Trained Layer")
            currentLayer.gridSize
@@ -190,7 +190,15 @@ class GHSom() extends Serializable {
                                                        tup._2.equals(currentLayerNeuron.parentNeuron.id))
                                              )
        println("layerNeuronRDD Count : " + layerNeuronRDD.count)
-       currentLayer.dumpToFile
+       
+       if (GHSomConfig.CLASS_LABELS) {
+         currentLayer.computeClassLabels(currentDataset)
+       }
+       
+       if (GHSomConfig.LABEL_SOM) {
+         currentLayer.computeLabels(currentDataset, attributes.map(attrib => attrib.name))
+       }
+       currentLayer.dumpToFile(attributes)
      }
    }
 }

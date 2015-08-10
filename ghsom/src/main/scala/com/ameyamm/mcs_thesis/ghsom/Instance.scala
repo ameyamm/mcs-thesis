@@ -17,18 +17,22 @@ class Instance( private val _label : String, private val _attributeVector : Arra
   }
   
   def +(that : Instance) : Instance = {
-    new Instance( this.label + "+" + that.label, 
+    new Instance("+", 
                   this.attributeVector.zip(that.attributeVector).map( t => t._1 + t._2 )               
         )
   }
   
+  def -(that : Instance) : Instance = {
+    new Instance ("-",
+                  this.attributeVector.zip(that.attributeVector).map(t => t._1 - t._2))
+  }
+
   def getDistanceFrom( other : Instance ) : Double = {
     sqrt(this.attributeVector.zip(other.attributeVector).map(t => t._1.getDistanceFrom(t._2)).reduce(_ + _))
   }
   
-  def -(that : Instance) : Instance = {
-    new Instance (this.label + "-" + that.label,
-                  this.attributeVector.zip(that.attributeVector).map(t => t._1 - t._2))
+  def /(num : Double) : Instance = {
+    new Instance(this.label, this.attributeVector.map(value => value/num))
   }
   
 }
@@ -58,6 +62,10 @@ object InstanceFunctions {
         "average instance",
         avgAttributeVector
         )
+  }
+  
+  def getQEInstance(instance1 : Instance, instance2 : Instance) : Instance = {
+    new Instance("qe", instance1.attributeVector.zip(instance2.attributeVector).map(tup => (tup._1 - tup._2).getAbs))
   }
 }
 

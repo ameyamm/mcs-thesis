@@ -14,6 +14,7 @@ import com.ameyamm.mcs_thesis.ghsom.Instance
 import com.ameyamm.mcs_thesis.ghsom.DoubleDimension
 import com.ameyamm.mcs_thesis.ghsom.DimensionType
 import com.ameyamm.mcs_thesis.ghsom.GHSom
+import com.ameyamm.mcs_thesis.ghsom.Attribute
 
 /**
  * @author ameya
@@ -21,6 +22,10 @@ import com.ameyamm.mcs_thesis.ghsom.GHSom
 class IrisDatasetReader (val dataset : RDD[String]) extends Serializable{
   
   private val datasetOfInstanceObjs = instanizeDataset(dataset)
+  
+  val attributeHeaderNames = Array("sepalLength", "sepalWidth", "petalLength", "petalWidth")
+  
+  val attributes : Array[Attribute] = Array.ofDim(attributeHeaderNames.size)
   
   case class Iris( 
       sepalLength : DoubleDimension, 
@@ -64,6 +69,13 @@ class IrisDatasetReader (val dataset : RDD[String]) extends Serializable{
     val maxVector = attribMap.reduceByKey( DoubleDimension.getMax _).collectAsMap()
     val minVector = attribMap.reduceByKey( DoubleDimension.getMin _).collectAsMap()
     
+    for (i <- 0 until attributes.size) {
+      attributes(i) = Attribute(attributeHeaderNames(i), 
+                                maxVector(i.toString()), 
+                                minVector(i.toString()))
+    }
+    
+    /*
     val maxfilename = "maxVector.data"
     val encoding : String = null
     val maxVectorString = maxVector.toList
@@ -80,6 +92,7 @@ class IrisDatasetReader (val dataset : RDD[String]) extends Serializable{
                                    .sortWith(_._1 < _._1)
                                    .map(tup => tup._2)
                                    .mkString(",")
+    */
     
     irisDataset.map( iris =>
                   Iris(
@@ -162,6 +175,6 @@ object IrisDatasetReader {
     
     val ghsom = GHSom()
     
-    ghsom.train(irisDataset)
+    ghsom.train(irisDataset, datasetReader.attributes)
   }
 }
