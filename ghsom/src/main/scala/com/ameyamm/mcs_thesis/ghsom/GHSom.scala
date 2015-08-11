@@ -4,7 +4,7 @@ import scala.collection.immutable
 import scala.collection.mutable
 import org.apache.spark.rdd.RDD
 import com.ameyamm.mcs_thesis.globals.GHSomConfig
-import scala.math.abs
+import scala.math.{abs, sqrt}
 
 /**
  * @author ameya
@@ -111,9 +111,6 @@ class GHSom() extends Serializable {
            //var epochs = currentLayer.totalNeurons * 2
            // runs on driver
            currentLayer.clearMappedInputs
-           println("Before Training")
-           currentLayer.gridSize
-           currentLayer.display()
           
            println("epochs : " + epochs)
            // MapReduce : Uses driver and workers returning the updated values to the driver 
@@ -123,22 +120,18 @@ class GHSom() extends Serializable {
            // computes the layer's MQE_m and updates the mqe for individual neurons in the layer
            currentLayer.computeStatsForLayer(currentDataset)
            
-           println("Trained Layer")
-           currentLayer.gridSize
-           currentLayer.display()
-           
            //val (needsTraining, mqe_m, errorNeuron) = currentLayer.checkMQE(GHSomConfig.TAU1) //mqe_change
            val (needsTraining, mqe_m, errorNeuron) = currentLayer.checkQE(GHSomConfig.TAU1)
            
-           if (needsTraining && currentLayer.totalNeurons < instanceCount) {
+           if (needsTraining && currentLayer.totalNeurons < sqrt(instanceCount)) {
              currentLayer.growMultipleCells(GHSomConfig.TAU1)
              //currentLayer.growSingleRowColumn(errorNeuron)
              continueTraining = true 
              println("Growing")
              currentLayer.gridSize
            }
-           else if (needsTraining && abs(mqe_m - prevMQE_m) > 0.01) {
-             epochs = epochs + 50
+           else if (needsTraining && abs(mqe_m - prevMQE_m) > 0.1) {
+             epochs = epochs * 2
              continueTraining = true
              prevMQE_m = mqe_m
              println("Increasing epochs " + epochs )

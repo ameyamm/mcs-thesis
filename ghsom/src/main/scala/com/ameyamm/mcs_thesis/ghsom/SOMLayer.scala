@@ -402,7 +402,7 @@ class SOMLayer private (
     val neuronLabels = new PairRDDFunctions[String, (Instance, Instance, Long)]( 
       dataset.map { instance => 
         val bmu = SOMLayerFunctions.findBMU(neurons, instance)
-        val sumInstance = Instance("sumInstance_", instance.attributeVector)
+        val sumInstance = Instance("sumInstance", instance.attributeVector)
         val qeInstance = InstanceFunctions.getQEInstance(bmu.neuronInstance, instance)
         (bmu.id,(sumInstance, qeInstance, 1))
       }
@@ -413,6 +413,8 @@ class SOMLayer private (
                                  .mapValues(SOMLayerFunctions.computeMeanAndQEForLabels)
 
     val neuronUpdatesMap = neuronMeanNQEs.collectAsMap
+    
+    println("Label Updates : " + neuronUpdatesMap.mkString(","))
     
     val neuronLabelMap = neuronUpdatesMap.mapValues( tup => getNeuronLabelSet(tup._1, tup._2, attributeHeaders) )
     
@@ -506,7 +508,7 @@ class SOMLayer private (
         
         val attributeMap = attributes.map ( attrib => (attrib.name, (attrib.minValue, attrib.maxValue) ) )
                                      .toMap
-        
+        println(attributeMap.mkString(","))
         val mappedLabelsOfNeurons = neurons.map(row =>
           row.map(neuron => 
             neuron.labels.map( label => {
@@ -517,7 +519,7 @@ class SOMLayer private (
             )
           )
         )
-                                     
+        
         val mappedLabels = mappedLabelsOfNeurons.map(row => 
             row.map(labelSet => labelSet.mkString(","))
                .mkString("|")
@@ -559,13 +561,18 @@ class SOMLayer private (
      */
     val labelMeanVector = header.zip(meanInstance.attributeVector)
                                 .map(tup => new Label(name = tup._1, value = tup._2))
-                                .filter( label => label.value.getValue != 0 )
+                                .filter( label => label.value.getValue > 0.02 )
                                 .sortWith( _.value < _.value )
     val labelQEVector = header.zip(qeInstance.attributeVector)
                               .map(tup => new Label(name = tup._1, value = tup._2))
-                              .filter(label => label.value.getValue > 0.001)
+                              .filter(label => label.value.getValue >= 0.001)
                               .sortWith(_.value < _.value)
-    
+                              
+    println(">>>>>>>>>>>\n" + meanInstance)
+    println(qeInstance)
+    println(labelMeanVector.mkString(","))
+    println(labelQEVector.mkString(","))
+                              
     val numOfLabels = GHSomConfig.NUM_LABELS
     
     val labels = scala.collection.mutable.Set[Label]()
@@ -578,7 +585,7 @@ class SOMLayer private (
       while( !labelFound && attributeIterator2 < labelMeanVector.length) {
         if (labelMeanVector(attributeIterator2).equals(labelQEVector(attributeIterator))) {
           labelFound = true
-          labels.add(labelQEVector(attributeIterator))
+          labels.add(labelMeanVector(attributeIterator2))
         }
         attributeIterator2 += 1
       }

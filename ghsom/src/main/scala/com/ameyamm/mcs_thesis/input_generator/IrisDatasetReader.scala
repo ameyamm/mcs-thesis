@@ -1,5 +1,14 @@
 package com.ameyamm.mcs_thesis.input_generator
 
+/**
+ * @author ameya
+ */
+import com.ameyamm.mcs_thesis.ghsom.Instance
+import com.ameyamm.mcs_thesis.ghsom.DoubleDimension
+import com.ameyamm.mcs_thesis.ghsom.DimensionType
+import com.ameyamm.mcs_thesis.ghsom.GHSom
+import com.ameyamm.mcs_thesis.globals.GHSomConfig
+import com.ameyamm.mcs_thesis.ghsom.Attribute
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -9,60 +18,37 @@ import org.apache.commons
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-
-import com.ameyamm.mcs_thesis.ghsom.Instance
-import com.ameyamm.mcs_thesis.ghsom.DoubleDimension
-import com.ameyamm.mcs_thesis.ghsom.DimensionType
-import com.ameyamm.mcs_thesis.ghsom.GHSom
-import com.ameyamm.mcs_thesis.ghsom.Attribute
-
-/**
- * @author ameya
- */
 class IrisDatasetReader (val dataset : RDD[String]) extends Serializable{
-  
-  private val datasetOfInstanceObjs = instanizeDataset(dataset)
   
   val attributeHeaderNames = Array("sepalLength", "sepalWidth", "petalLength", "petalWidth")
   
   val attributes : Array[Attribute] = Array.ofDim(attributeHeaderNames.size)
   
-  case class Iris( 
-      sepalLength : DoubleDimension, 
-      sepalWidth : DoubleDimension,
-      petalLength : DoubleDimension,
-      petalWidth : DoubleDimension,
-      classValue : String 
-      ) {
-    def getInstanceObj = {
-      val attributeVector : Array[DimensionType] = Array(sepalLength, sepalWidth, petalLength, petalWidth)
-      Instance(classValue, attributeVector)
-    }
+  private val datasetOfInstanceObjs = instanizeDataset(dataset)
+  
+  def printDataset() {
+    // println(datasetRDD.count)
   }
   
   def getDataset : RDD[Instance] = datasetOfInstanceObjs
   
-  def printDataset() {
-    // println(datasetRDD.count)
-    println("Dataset")
-    println(datasetOfInstanceObjs.take(9).mkString("\n"))
+  case class Data ( className : String, attributeVector : Array[DoubleDimension] ) {
+    def getInstanceObj = {
+      Instance(className, attributeVector.asInstanceOf[Array[DimensionType]])
+    }
   }
-      
+  
   def instanizeDataset(dataset : RDD[String]) : RDD[Instance] = {
     
-    val irisDataset = convertToIrisRDD(dataset)
+    val data = convertToDataRDD(dataset)
     
-    val obj = irisDataset.first()
+    val obj = data.first()
     
     val attribMap : RDD[(String,DoubleDimension)] = 
-      irisDataset.flatMap( 
-                    iris => { 
-                          List(
-                                ("sepalLength",iris.sepalLength),
-                                ("sepalWidth", iris.sepalWidth),
-                                ("petalLength", iris.petalLength),
-                                ("petalWidth", iris.petalWidth)
-                              )
+      data.flatMap( 
+                    rec => { 
+                          val indexElem = rec.attributeVector.zipWithIndex
+                          indexElem.map(tup => (tup._2.toString(), tup._1)).toList
                     }
                   )
     
@@ -92,55 +78,29 @@ class IrisDatasetReader (val dataset : RDD[String]) extends Serializable{
                                    .sortWith(_._1 < _._1)
                                    .map(tup => tup._2)
                                    .mkString(",")
+
+    FileUtils.writeStringToFile(new File(minfilename), minVectorString, encoding)
     */
     
-    irisDataset.map( iris =>
-                  Iris(
-                        {
-                          if (maxVector("sepalLength") - minVector("sepalLength") != DoubleDimension(0)) 
-                            (iris.sepalLength - minVector("sepalLength")) / (maxVector("sepalLength") - minVector("sepalLength"))
-                          else 
-                            DoubleDimension(0) 
-                        },
-                        {
-                          if (maxVector("sepalWidth") - minVector("sepalWidth") != DoubleDimension(0)) 
-                            (iris.sepalWidth - minVector("sepalWidth")) / (maxVector("sepalWidth") - minVector("sepalWidth"))
-                          else 
-                            DoubleDimension(0)
-                        },
-                        {
-                          if (maxVector("petalLength") - minVector("petalLength") != DoubleDimension(0)) 
-                            (iris.petalLength - minVector("petalLength")) / (maxVector("petalLength") - minVector("petalLength"))
-                          else 
-                            DoubleDimension(0)
-                        },
-                        {
-                          if (maxVector("petalWidth") - minVector("petalWidth") != DoubleDimension(0)) 
-                            (iris.petalWidth - minVector("petalWidth")) / (maxVector("petalWidth") - minVector("petalWidth"))
-                          else 
-                            DoubleDimension(0)
-                        },
-                        iris.classValue
+    data.map( rec => 
+                  Data( 
+                        rec.className,
+                        rec.attributeVector.zipWithIndex
+                                           .map( tup => (tup._1 - minVector(tup._2.toString)) / (maxVector(tup._2.toString) - minVector(tup._2.toString))) 
                       ).getInstanceObj
-                )
+        )
   }
   
-  private def convertToIrisRDD( dataset : RDD[String] ) : RDD[Iris] = {
-    
+  def convertToDataRDD(dataset : RDD[String]) : RDD[Data] = {
     dataset.map( line => {
       val array = line.split(',')
-      Iris(
-          DoubleDimension(array(0).toDouble),
-          DoubleDimension(array(1).toDouble),
-          DoubleDimension(array(2).toDouble),
-          DoubleDimension(array(3).toDouble),
-          array(4)
+      Data(
+          array(4),
+          array.slice(from = 0, until = 4).map { x => DoubleDimension(x.toDouble) }          
           )
     })
   }
-  
 }
-
 
 object IrisDatasetReader {
   
@@ -148,7 +108,7 @@ object IrisDatasetReader {
   
   def main(args : Array[String]) {
     val conf = new SparkConf(true)
-               .setAppName("Iris Dataset Reader")
+               .setAppName("Iris")
                .set("spark.storage.memoryFraction","0")
                .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
                .set("spark.default.parallelism","8")
@@ -156,7 +116,12 @@ object IrisDatasetReader {
                .setMaster("spark://192.168.101.13:7077")
 
     val sc = new SparkContext(conf) 
-
+    
+    var epochs = GHSomConfig.EPOCHS
+    if(args.length >= 1) {
+      epochs = args(0).toInt  
+    }
+    
     /*
     val maxVector = Array.fill(10)(DoubleDimension.MinValue)
     val attribVector = Array.fill(10)(DoubleDimension.getRandomDimensionValue)
@@ -170,11 +135,11 @@ object IrisDatasetReader {
     */
     val dataset = sc.textFile("hdfs://192.168.101.13:9000/user/ameya/datasets/iris/iris.data")
     val datasetReader = new IrisDatasetReader(dataset) 
-    //datasetReader.printDataset()
-    val irisDataset = datasetReader.getDataset
+    datasetReader.printDataset()
+    val processedDataset = datasetReader.getDataset
     
     val ghsom = GHSom()
     
-    ghsom.train(irisDataset, datasetReader.attributes)
+    ghsom.train(processedDataset, datasetReader.attributes, epochs)
   }
 }
