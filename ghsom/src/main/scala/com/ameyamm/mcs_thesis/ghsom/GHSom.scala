@@ -5,15 +5,19 @@ import scala.collection.mutable
 import org.apache.spark.rdd.RDD
 import com.ameyamm.mcs_thesis.globals.GHSomConfig
 import scala.math.{abs, sqrt}
+import scala.concurrent.duration.{FiniteDuration,Duration}
+import java.util.concurrent.TimeUnit._
+import java.io.File
+import org.apache.commons.io.FileUtils
 
 /**
  * @author ameya
  */
 class GHSom() extends Serializable {
    
-   //def dataset : RDD[Instance] = _dataset
-   
    def train(dataset : RDD[Instance], attributes : Array[Attribute] = null, epochsValue : Int = GHSomConfig.EPOCHS) {
+     
+     val startLearningTime = System.currentTimeMillis()
      
      // Compute m0 - Mean of all the input
      
@@ -37,61 +41,47 @@ class GHSom() extends Serializable {
      
      //layer0Neuron.mqe = mqe0 //mqe_change
      layer0Neuron.qe = qe0
+     layer0Neuron.mappedInstanceCount = totalInstances
      
-     println("meanInstance - " + meanInstance)
      println("total Instances : " + totalInstances)
      //println("mqe0 : " + mqe0)
      println("qe0 : " + qe0)
-     println(">>>>>>>>>>>>>>>>>>>>>>>>>")
      
      // ID of a particular SOMLayer. there can be many layers in the same layer. this is like a PK
      val layer = 0 
-     var layerNeuronRDD = dataset.map(instance => (layer, layer0Neuron.id, instance))
+     var layerNeuronRDD = dataset.map(instance => GHSom.LayerNeuronRDDRecord(layer, layer0Neuron.id, instance))
      
-     // layer and neuron is the pared layer and neuron
-     //case class LayerNeuron(parentLayer : Int, parentNeuronID : String, parentNeuronMQE : Double) { // mqe_change
-     case class LayerNeuron(parentLayer : Int, parentNeuron : Neuron) {
-       override def equals( obj : Any ) : Boolean = {
-         obj match {
-          case o : LayerNeuron => {
-            (this.parentLayer.equals(o.parentLayer) && this.parentNeuron.id.equals(o.parentNeuron.id)) 
-          }
-          case _ => false 
-         }
-       }
-  
-       override def hashCode : Int = parentLayer.hashCode() + parentNeuron.id.hashCode()
-     }
-     
-     val layerQueue = new mutable.Queue[LayerNeuron]()
+     val layerQueue = new mutable.Queue[GHSom.LayerNeuron]()
      
      //layerQueue.enqueue(LayerNeuron(layer, layer0Neuron.id, mqe0)) //mqe_change
-     layerQueue.enqueue(LayerNeuron(layer, layer0Neuron))
+     layerQueue.enqueue(GHSom.LayerNeuron(layer, layer0Neuron))
      
      var hierarchicalGrowth = true 
      
      // Create first som layer of 2 x 2
      
+     val attribVectorSize = layer0Neuron.neuronInstance.attributeVector.size
+
+     dumpAttributes(attributes)
      while(!layerQueue.isEmpty) {
-       
+       val layerLearningStartTime = System.currentTimeMillis()
        val currentLayerNeuron = layerQueue.dequeue
        
        println("Processing for parentLayer :" + currentLayerNeuron.parentLayer + ", parent neuron : " + currentLayerNeuron.parentNeuron.id)
        // make dataset for this layer
 
        val currentDataset = layerNeuronRDD.filter( obj => 
-                                                     obj._1.equals(currentLayerNeuron.parentLayer) && 
-                                                     obj._2.equals(currentLayerNeuron.parentNeuron.id)
+                                                     obj.parentLayerID.equals(currentLayerNeuron.parentLayer) && 
+                                                     obj.parentNeuronID.equals(currentLayerNeuron.parentNeuron.id)
                                            )
-                                           .map(obj => obj._3)
+                                          .map(obj => obj.instance)
                                            
-       val instanceCount = currentDataset.count
+       val instanceCount = currentLayerNeuron.parentNeuron.mappedInstanceCount
 
        println("Instance count in dataset for current layer " + instanceCount)
        
        var continueTraining = false 
      
-       val attribVectorSize = currentDataset.first.attributeVector.size
 
        val currentLayer = SOMLayer(
                        rowDim = GHSomConfig.INIT_LAYER_SIZE, 
@@ -101,7 +91,6 @@ class GHSom() extends Serializable {
                        vectorSize = attribVectorSize)
                        
        if (currentLayerNeuron.parentLayer != 0) {
-         println("Initializing")
          currentLayer.initializeLayerWithParentNeuronWeightVectors
        }
      
@@ -130,7 +119,7 @@ class GHSom() extends Serializable {
              println("Growing")
              currentLayer.gridSize
            }
-           else if (needsTraining && abs(mqe_m - prevMQE_m) > 0.1) {
+           else if (needsTraining && prevMQE_m - mqe_m > 0.1) {
              epochs = epochs * 2
              continueTraining = true
              prevMQE_m = mqe_m
@@ -140,26 +129,24 @@ class GHSom() extends Serializable {
              continueTraining = false
              println("Done training")
            }
-           //if (currentLayer.totalNeurons < instanceCount * GHSomConfig.GRID_SIZE_FACTOR)
-           // Grows the layer, adding row/column. Runs on the driver
-           /*
-            * if (currentLayer.totalNeurons < instanceCount)
-            
-             isGrown = currentLayer.grow(GHSomConfig.TAU1)
-           else
-           *  
-           */
-             
-           //else
-           //isGrown = false 
-           
        }while(continueTraining)
-         
+       
+       println("Layer " + currentLayer.layerID + " Training time : " + Duration.create(System.currentTimeMillis() - layerLearningStartTime, MILLISECONDS))  
+
+       if (GHSomConfig.CLASS_LABELS) {
+         currentLayer.computeClassLabels(currentDataset)
+       }
+       
+       if (GHSomConfig.LABEL_SOM) {
+         currentLayer.computeLabels(currentDataset, attributes.map(attrib => attrib.name))
+       }
+
+       currentLayer.dumpToFile(attributes)
        // MapReduce : Uses driver and workers, updating the neurons at the driver
        // computes the layer's MQE_m and updates the mqe for individual neurons in the layer
        // currentLayer.computeMQE_m(currentDataset)
 
-       currentLayer.display()
+       //currentLayer.display()
        // Logic for hierarchical growth
        // find neurons in current layer not abiding the condition
        // for the current dataset find the rdd of instances for the neurons to expand
@@ -175,24 +162,28 @@ class GHSom() extends Serializable {
          //println("Expand neuron: " + currentLayer.layerID + " : " + neuron.id + " : " + neuron.mqe) 
          println("Expand neuron: " + currentLayer.layerID + " : " + neuron.id + " : " + neuron.qe) 
          //layerQueue.enqueue(LayerNeuron(currentLayer.layerID, neuron.id, neuron.mqe)) // mqe_change
-         layerQueue.enqueue(LayerNeuron(currentLayer.layerID, neuron))
+         layerQueue.enqueue(GHSom.LayerNeuron(currentLayer.layerID, neuron))
        }
        
-       layerNeuronRDD = currentLayer.populateRDDForHierarchicalExpansion(layerNeuronRDD, currentDataset, neuronsToExpand)
-       layerNeuronRDD = layerNeuronRDD.filter( tup => !(tup._1.equals(currentLayerNeuron.parentLayer) &&  
-                                                       tup._2.equals(currentLayerNeuron.parentNeuron.id))
+       layerNeuronRDD = layerNeuronRDD ++ currentLayer.getRDDForHierarchicalExpansion(currentDataset, neuronsToExpand)
+       
+       layerNeuronRDD = layerNeuronRDD.filter( record => !(record.parentLayerID.equals(currentLayerNeuron.parentLayer) &&  
+                                                           record.parentNeuronID.equals(currentLayerNeuron.parentNeuron.id))
                                              )
-       println("layerNeuronRDD Count : " + layerNeuronRDD.count)
        
-       if (GHSomConfig.CLASS_LABELS) {
-         currentLayer.computeClassLabels(currentDataset)
-       }
-       
-       if (GHSomConfig.LABEL_SOM) {
-         currentLayer.computeLabels(currentDataset, attributes.map(attrib => attrib.name))
-       }
-       currentLayer.dumpToFile(attributes)
-     }
+    }
+
+     println("Training time : " + Duration.create(System.currentTimeMillis() - startLearningTime, MILLISECONDS))
+   }
+   
+   private def dumpAttributes(attributes : Array[Attribute]) {
+     val encoding : String = null
+     val attributeFileName = "attributes.txt"
+     
+     val attributeString = attributes.map(attrib => attrib.name + "|" + attrib.minValue + "|" + attrib.maxValue)
+                                     .mkString("\n")
+     
+     FileUtils.writeStringToFile(new File(attributeFileName), attributeString, encoding)
    }
 }
 
@@ -207,5 +198,32 @@ object GHSom {
     new GHSom()
   }
   
+  // layer and neuron is the pared layer and neuron
+  case class LayerNeuron(parentLayer : Int, parentNeuron : Neuron) {
+	  override def equals( obj : Any ) : Boolean = {
+			  obj match {
+			  case o : LayerNeuron => {
+				  (this.parentLayer.equals(o.parentLayer) && this.parentNeuron.id.equals(o.parentNeuron.id)) 
+			  }
+			  case _ => false 
+			  }
+	  }
+
+	  override def hashCode : Int = parentLayer.hashCode() + parentNeuron.id.hashCode()
+  }
   
+  case class LayerNeuronRDDRecord(parentLayerID : Int, parentNeuronID : String, instance : Instance) {
+    override def equals( obj : Any ) : Boolean = {
+			  obj match {
+			  case o : LayerNeuronRDDRecord => {
+				  (this.parentLayerID.equals(o.parentLayerID) && 
+           this.parentNeuronID.equals(o.parentNeuronID) && 
+           this.instance.equals(o.instance)) 
+			  }
+			  case _ => false 
+			  }
+	  }
+
+	  override def hashCode : Int = parentLayerID.hashCode() + parentNeuronID.hashCode() + instance.hashCode()
+  }
 }
