@@ -137,4 +137,6 @@ object Neuron {
   def apply(row : Int, column: Int, neuronInstance : Instance) : Neuron = {
     new Neuron(row, column, neuronInstance)
   }
+  
+  case class NeuronStats(mqe : Double = 0, qe : Double = 0, instanceCount : Long = 0)
 }

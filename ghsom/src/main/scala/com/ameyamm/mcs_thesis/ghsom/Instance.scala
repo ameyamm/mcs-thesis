@@ -13,7 +13,21 @@ class Instance( private val _label : String, private val _attributeVector : Arra
   def attributeVector = _attributeVector
   
   override def toString() : String = {
-    return _label + "::>" + attributeVector.mkString(":")
+    return "Instance : [" + _label + ":" + attributeVector.mkString(",") + "]"
+  }
+  
+  override def equals(that : Any) : Boolean = {
+    that match {
+      case other : Instance => (this.label == other.label) &&
+                               (this.attributeVector.zip(other.attributeVector)
+                                                    .forall(elemTup => elemTup._1.equals(elemTup._2))
+                               )  
+      case _ => false
+    }
+  }
+  
+  override def hashCode = {
+    this.label.hashCode() + this.attributeVector.reduce(_ + _).getValue.asInstanceOf[Int]
   }
   
   def +(that : Instance) : Instance = {
@@ -34,6 +48,8 @@ class Instance( private val _label : String, private val _attributeVector : Arra
   def /(num : Double) : Instance = {
     new Instance(this.label, this.attributeVector.map(value => value/num))
   }
+  
+  
   
 }
 
@@ -67,6 +83,8 @@ object InstanceFunctions {
   def getQEInstance(instance1 : Instance, instance2 : Instance) : Instance = {
     new Instance("qe", instance1.attributeVector.zip(instance2.attributeVector).map(tup => (tup._1 - tup._2).getAbs))
   }
+  
+  
 }
 
 object Instance extends Serializable {

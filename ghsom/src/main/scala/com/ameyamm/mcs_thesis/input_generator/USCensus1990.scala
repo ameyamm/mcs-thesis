@@ -18,11 +18,21 @@ import org.apache.commons
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-class AnimalDataset (val dataset : RDD[String]) extends Serializable{
+class USCensus1990 (val dataset : RDD[String]) extends Serializable{
   
-  val attributeHeaderNames = Array("hair","feathers", "eggs", "milk", 
-      "airborne", "aquatic", "predator", "toothed", "backbone", 
-      "breathes", "venomous", "fins", "legs", "tail","domestic", "catsize")//, "type" )
+  val attributeHeaderNames = Array("dAge","dAncstry1","dAncstry2","iAvail",
+      "iCitizen","iClass","dDepart","iDisabl1","iDisabl2","iEnglish",
+      "iFeb55","iFertil","dHispanic","dHour89","dHours","iImmigr",
+      "dIncome1","dIncome2","dIncome3","dIncome4","dIncome5",
+      "dIncome6","dIncome7","dIncome8","dIndustry","iKorean",
+      "iLang1","iLooking","iMarital","iMay75880","iMeans",
+      "iMilitary","iMobility","iMobillim","dOccup","iOthrserv",
+      "iPerscare","dPOB","dPoverty","dPwgt1","iRagechld","dRearning",
+      "iRelat1","iRelat2","iRemplpar","iRiders","iRlabor","iRownchld",
+      "dRpincome","iRPOB","iRrelchld","iRspouse","iRvetserv","iSchool",
+      "iSept80","iSex","iSubfam1","iSubfam2","iTmpabsnt","dTravtime",
+      "iVietnam","dWeek89","iWork89","iWorklwk","iWWII","iYearsch",
+      "iYearwrk","dYrsserv")//, "type" )
   
   val attributes : Array[Attribute] = Array.ofDim(attributeHeaderNames.size)
   
@@ -98,23 +108,24 @@ class AnimalDataset (val dataset : RDD[String]) extends Serializable{
       val array = line.split(',')
       Data(
           array(0),
-          array.slice(from = 1, until = array.length - 1).map { x => DoubleDimension(x.toDouble) }          
+          array.slice(from = 1, until = array.length).map { x => DoubleDimension(x.toDouble) }          
           )
     })
   }
 }
 
-object AnimalDataset {
+object USCensus1990 {
   
-  val logger = LogManager.getLogger("Iris")
+  val logger = LogManager.getLogger("USCensus")
   
   def main(args : Array[String]) {
     val conf = new SparkConf(true)
-               .setAppName("Animal")
+               .setAppName("USCensus")
                .set("spark.storage.memoryFraction","0")
-               .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-               .set("spark.default.parallelism","8")
-               .set("spark.kryoserializer.buffer.max","400")
+               .set("spark.executor.memory","2g")
+               //.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+               .set("spark.default.parallelism","50")
+               //.set("spark.kryoserializer.buffer.max","400")
                .setMaster("spark://192.168.101.13:7077")
 
     val sc = new SparkContext(conf) 
@@ -124,19 +135,8 @@ object AnimalDataset {
       epochs = args(0).toInt  
     }
     
-    /*
-    val maxVector = Array.fill(10)(DoubleDimension.MinValue)
-    val attribVector = Array.fill(10)(DoubleDimension.getRandomDimensionValue)
-    println(maxVector.mkString)
-    println(attribVector.mkString)
-
-    for ( i <- 0 until attribVector.size ) { 
-        maxVector(i) = if (attribVector(i) > maxVector(i)) attribVector(i) else maxVector(i)
-    } 
-    println(maxVector.mkString)
-    */
-    val dataset = sc.textFile("hdfs://192.168.101.13:9000/user/ameya/datasets/animal/animal.data")
-    val datasetReader = new AnimalDataset(dataset) 
+    val dataset = sc.textFile("hdfs://192.168.101.13:9000/user/ameya/datasets/uscensus1990/uscensus1990.data")
+    val datasetReader = new USCensus1990(dataset) 
     datasetReader.printDataset()
     val processedDataset = datasetReader.getDataset
     
